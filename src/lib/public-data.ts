@@ -1,12 +1,9 @@
 import { supabase } from "@/lib/supabase";
-import type { BracketMatch, Branch, LiveMatch, Sport, StandingRow, Team, ZoneStandings } from "@/types";
+import type { BracketMatch, Branch, HistorialMatch, LiveMatch, Sport, Team, ZoneStandings } from "@/types";
 import type { CanchaRow, Categoria, EquipoRow, EventoPartidoRow, PartidoRow } from "@/lib/db-types";
+import { computeZonesForCategoria, teamFrom } from "@/lib/standings";
 
 const ROUND_ORDER = ["Octavos", "Cuartos", "Semifinal", "3er puesto", "Final"];
-
-function teamFrom(row: EquipoRow): Team {
-  return { id: row.id, name: row.nombre, shieldColor: row.color_primario };
-}
 
 function ramaDe(sport: Sport, branch: Branch): string {
   if (sport === "basquet") return "Único";
@@ -34,62 +31,13 @@ function scoreDesde(partido: PartidoRow, eventos: EventoPartidoRow[]): { home: n
   return { home, away };
 }
 
-function computeStandings(equipos: EquipoRow[], partidosFinalizados: PartidoRow[], cat: Categoria): StandingRow[] {
-  interface Agg {
-    pj: number;
-    pg: number;
-    pe: number;
-    pp: number;
-    gf: number;
-    gc: number;
-  }
-  const agg = new Map<string, Agg>();
-  equipos.forEach((e) => agg.set(e.id, { pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0 }));
-
-  for (const p of partidosFinalizados) {
-    if (!p.equipo_visitante_id) continue;
-    const local = agg.get(p.equipo_local_id);
-    const visitante = agg.get(p.equipo_visitante_id);
-    if (!local || !visitante) continue;
-    const rl = p.resultado_local ?? 0;
-    const rv = p.resultado_visitante ?? 0;
-    local.pj++;
-    visitante.pj++;
-    local.gf += rl;
-    local.gc += rv;
-    visitante.gf += rv;
-    visitante.gc += rl;
-    if (rl > rv) {
-      local.pg++;
-      visitante.pp++;
-    } else if (rl < rv) {
-      visitante.pg++;
-      local.pp++;
-    } else {
-      local.pe++;
-      visitante.pe++;
-    }
-  }
-
-  const rows = equipos
-    .map((e) => {
-      const a = agg.get(e.id) as Agg;
-      const points = a.pg * cat.puntos_victoria + a.pe * cat.puntos_empate + a.pp * cat.puntos_derrota;
-      return { team: teamFrom(e), played: a.pj, goalDiff: a.gf - a.gc, points, qualifies: false };
-    })
-    .sort((a, b) => b.points - a.points || b.goalDiff - a.goalDiff);
-  rows.forEach((row, i) => {
-    row.qualifies = i < cat.cantidad_clasifican_por_grupo;
-  });
-  return rows;
-}
-
 export interface PublicData {
   zones: ZoneStandings[];
   bracket: BracketMatch[];
+  historial: HistorialMatch[];
 }
 
-const EMPTY: PublicData = { zones: [], bracket: [] };
+const EMPTY: PublicData = { zones: [], bracket: [], historial: [] };
 
 export async function fetchLiveCount(): Promise<number> {
   if (!supabase) return 0;
@@ -160,59 +108,58 @@ export async function fetchPublicData(sport: Sport, branch: Branch): Promise<Pub
   if (!categoria) return EMPTY;
   const cat = categoria as Categoria;
 
-  const [{ data: equiposData }, { data: partidosData }, { data: gruposData }] = await Promise.all([
-    supabase.from("equipos").select("*").eq("categoria_id", cat.id),
-    supabase.from("partidos").select("*").eq("categoria_id", cat.id),
-    supabase.from("grupos").select("*").eq("categoria_id", cat.id)
-  ]);
-
-  const equipos = (equiposData as EquipoRow[]) ?? [];
-  const partidos = (partidosData as PartidoRow[]) ?? [];
-  const grupos = gruposData ?? [];
-  const finalizados = partidos.filter((p) => p.estado === "finalizado");
-
-  let zones: ZoneStandings[];
-  if (grupos.length > 0) {
-    const { data: geData } = await supabase
-      .from("grupo_equipos")
-      .select("*")
-      .in(
-        "grupo_id",
-        grupos.map((g) => g.id)
-      );
-    const ge = (geData as { grupo_id: string; equipo_id: string }[]) ?? [];
-    zones = grupos.map((g) => {
-      const equipoIds = new Set(ge.filter((x) => x.grupo_id === g.id).map((x) => x.equipo_id));
-      const equiposZona = equipos.filter((e) => equipoIds.has(e.id));
-      const partidosZona = finalizados.filter((p) => p.grupo_id === g.id);
-      return { id: g.id, nombre: g.nombre, rows: computeStandings(equiposZona, partidosZona, cat) };
-    });
-  } else {
-    zones = [{ id: "general", nombre: "", rows: computeStandings(equipos, finalizados, cat) }];
-  }
+  const { zones, equipos, partidos, grupos } = await computeZonesForCategoria(cat);
 
   // ---- cruces ----
   const equipoMap = new Map(equipos.map((e) => [e.id, teamFrom(e)]));
   const bracket: BracketMatch[] = partidos
     .filter((p) => p.ronda_eliminatoria && equipoMap.has(p.equipo_local_id))
     .sort((a, b) => ROUND_ORDER.indexOf(a.ronda_eliminatoria as string) - ROUND_ORDER.indexOf(b.ronda_eliminatoria as string))
+    .map((p) => {
+      const rl = p.resultado_local ?? 0;
+      const rv = p.resultado_visitante ?? 0;
+      const pl = p.penales_local;
+      const pv = p.penales_visitante;
+      const definidoPorPenales = rl === rv && pl !== null && pv !== null && pl !== pv;
+      let winnerId: string | null = null;
+      if (p.estado === "finalizado") {
+        if (rl !== rv) winnerId = rl > rv ? p.equipo_local_id : p.equipo_visitante_id;
+        else if (definidoPorPenales) winnerId = (pl as number) > (pv as number) ? p.equipo_local_id : p.equipo_visitante_id;
+      }
+      return {
+        round: p.ronda_eliminatoria as string,
+        home: equipoMap.get(p.equipo_local_id) as Team,
+        away: p.equipo_visitante_id ? equipoMap.get(p.equipo_visitante_id) ?? null : null,
+        homeScore: p.resultado_local,
+        awayScore: p.resultado_visitante,
+        penalesHome: pl,
+        penalesAway: pv,
+        winnerId,
+        pending: p.estado !== "finalizado",
+        scheduledTime: p.fecha_hora_programada
+          ? new Date(p.fecha_hora_programada).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })
+          : undefined
+      };
+    });
+
+  // ---- historial de resultados ----
+  const grupoNombrePorId = new Map(grupos.map((g) => [g.id, g.nombre]));
+  const historial: HistorialMatch[] = partidos
+    .filter((p) => p.estado === "finalizado" && p.equipo_visitante_id && equipoMap.has(p.equipo_local_id) && equipoMap.has(p.equipo_visitante_id))
+    .sort((a, b) => (b.fecha_hora_programada ?? "").localeCompare(a.fecha_hora_programada ?? ""))
     .map((p) => ({
-      round: p.ronda_eliminatoria as string,
+      id: p.id,
       home: equipoMap.get(p.equipo_local_id) as Team,
-      away: p.equipo_visitante_id ? equipoMap.get(p.equipo_visitante_id) ?? null : null,
-      homeScore: p.resultado_local,
-      awayScore: p.resultado_visitante,
-      winnerId:
-        p.estado === "finalizado"
-          ? (p.resultado_local ?? 0) > (p.resultado_visitante ?? 0)
-            ? p.equipo_local_id
-            : p.equipo_visitante_id
-          : null,
-      pending: p.estado !== "finalizado",
-      scheduledTime: p.fecha_hora_programada
-        ? new Date(p.fecha_hora_programada).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })
-        : undefined
+      away: equipoMap.get(p.equipo_visitante_id as string) as Team,
+      homeScore: p.resultado_local ?? 0,
+      awayScore: p.resultado_visitante ?? 0,
+      penalesHome: p.penales_local,
+      penalesAway: p.penales_visitante,
+      roundLabel: p.ronda_eliminatoria ?? (p.grupo_id ? grupoNombrePorId.get(p.grupo_id) ?? "Fase de grupos" : "Fase de grupos"),
+      date: p.fecha_hora_programada
+        ? new Date(p.fecha_hora_programada).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" })
+        : ""
     }));
 
-  return { zones, bracket };
+  return { zones, bracket, historial };
 }

@@ -25,7 +25,11 @@ export interface StandingRow {
   played: number;
   goalDiff: number;
   points: number;
+  amarillas: number;
+  rojas: number;
   qualifies: boolean;
+  /** Empatado en puntos, DG, amarillas y rojas con el equipo de al lado — hace falta partido de desempate. */
+  empatado: boolean;
 }
 
 export interface ZoneStandings {
@@ -40,7 +44,21 @@ export interface BracketMatch {
   away: Team | null;
   homeScore: number | null;
   awayScore: number | null;
+  penalesHome: number | null;
+  penalesAway: number | null;
   winnerId: string | null;
   pending: boolean;
   scheduledTime?: string;
+}
+
+export interface HistorialMatch {
+  id: string;
+  home: Team;
+  away: Team;
+  homeScore: number;
+  awayScore: number;
+  penalesHome: number | null;
+  penalesAway: number | null;
+  roundLabel: string;
+  date: string;
 }

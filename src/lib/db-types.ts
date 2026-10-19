@@ -72,6 +72,15 @@ export interface PartidoRow {
   estado: PartidoEstado;
   resultado_local: number | null;
   resultado_visitante: number | null;
+  penales_local: number | null;
+  penales_visitante: number | null;
+  created_at?: string;
+}
+
+export interface GrupoRow {
+  id: string;
+  categoria_id: string;
+  nombre: string;
 }
 
 export interface AsignacionVeedor {

@@ -25,6 +25,7 @@ interface Props {
   titularesLocal: Set<string>;
   titularesVisitante: Set<string>;
   estadoInicial: PartidoEstado;
+  esEliminatoria: boolean;
 }
 
 type Step = "equipo" | "jugador" | "asistencia" | "sale" | "entra" | "texto";
@@ -56,7 +57,8 @@ export function PartidoEnVivo({
   jugadoresVisitante,
   titularesLocal,
   titularesVisitante,
-  estadoInicial
+  estadoInicial,
+  esEliminatoria
 }: Props) {
   const navigate = useNavigate();
   const clock = useMatchClock(partidoId);
@@ -67,6 +69,9 @@ export function PartidoEnVivo({
   const [sheet, setSheet] = useState<SheetState | null>(null);
   const [texto, setTexto] = useState("");
   const [confirmState, setConfirmState] = useState<{ mensaje: string; accion: () => void } | null>(null);
+  const [penalesAbierto, setPenalesAbierto] = useState(false);
+  const [penalesLocal, setPenalesLocal] = useState(0);
+  const [penalesVisitante, setPenalesVisitante] = useState(0);
 
   useEffect(() => {
     if (!supabase) return;
@@ -261,6 +266,27 @@ export function PartidoEnVivo({
     navigate("/veedor");
   }
 
+  const empatadoEnEliminatoria = esEliminatoria && score.local === score.visitante;
+
+  async function confirmarPenales() {
+    if (penalesLocal === penalesVisitante) return;
+    clock.detener();
+    setEstado("finalizado");
+    setPenalesAbierto(false);
+    if (!supabase) return;
+    await supabase
+      .from("partidos")
+      .update({
+        estado: "finalizado",
+        resultado_local: score.local,
+        resultado_visitante: score.visitante,
+        penales_local: penalesLocal,
+        penales_visitante: penalesVisitante
+      })
+      .eq("id", partidoId);
+    navigate("/veedor");
+  }
+
   const equipoSel = sheet?.equipoId === equipoLocal.id ? equipoLocal : sheet?.equipoId === equipoVisitante.id ? equipoVisitante : null;
 
   return (
@@ -312,7 +338,21 @@ export function PartidoEnVivo({
               Iniciar 2do tiempo
             </button>
           )}
-          {estado === "en_juego" && <button className="btn btn-danger btn-sm" onClick={finalizarPartido}>Finalizar partido</button>}
+          {estado === "en_juego" && empatadoEnEliminatoria && (
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setPenalesLocal(0);
+                setPenalesVisitante(0);
+                setPenalesAbierto(true);
+              }}
+            >
+              Cargar penales
+            </button>
+          )}
+          {estado === "en_juego" && !empatadoEnEliminatoria && (
+            <button className="btn btn-danger btn-sm" onClick={finalizarPartido}>Finalizar partido</button>
+          )}
         </div>
       </div>
 
@@ -441,6 +481,51 @@ export function PartidoEnVivo({
             )}
 
             <button className="btn btn-ghost" style={{ marginTop: 10, width: "100%" }} onClick={closeSheet}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {penalesAbierto && (
+        <div className="sheet-overlay" onClick={() => setPenalesAbierto(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-title">Cargar penales</div>
+            <div style={{ display: "flex", justifyContent: "space-around", alignItems: "center", margin: "4px 0 18px" }}>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 10 }}>{equipoLocal.nombre}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setPenalesLocal((v) => Math.max(0, v - 1))}>
+                    −
+                  </button>
+                  <span className="v-score tnum" style={{ fontSize: 28 }}>
+                    {penalesLocal}
+                  </span>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setPenalesLocal((v) => v + 1)}>
+                    +
+                  </button>
+                </div>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontWeight: 800, fontSize: 13, marginBottom: 10 }}>{equipoVisitante.nombre}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setPenalesVisitante((v) => Math.max(0, v - 1))}>
+                    −
+                  </button>
+                  <span className="v-score tnum" style={{ fontSize: 28 }}>
+                    {penalesVisitante}
+                  </span>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setPenalesVisitante((v) => v + 1)}>
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+            {penalesLocal === penalesVisitante && <p className="form-hint form-hint-warn">Los penales no pueden terminar empatados.</p>}
+            <button className="btn btn-primary" style={{ width: "100%" }} disabled={penalesLocal === penalesVisitante} onClick={confirmarPenales}>
+              Finalizar {penalesLocal}-{penalesVisitante} por penales
+            </button>
+            <button className="btn btn-ghost" style={{ marginTop: 10, width: "100%" }} onClick={() => setPenalesAbierto(false)}>
               Cancelar
             </button>
           </div>

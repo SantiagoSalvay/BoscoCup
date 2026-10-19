@@ -81,6 +81,7 @@ export function PartidoRoute() {
       titularesLocal={titularesLocal}
       titularesVisitante={titularesVisitante}
       estadoInicial={partido.estado}
+      esEliminatoria={Boolean(partido.ronda_eliminatoria)}
     />
   );
 }

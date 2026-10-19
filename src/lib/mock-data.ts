@@ -1,4 +1,4 @@
-import type { BracketMatch, Branch, LiveMatch, Sport, Team, ZoneStandings } from "@/types";
+import type { BracketMatch, Branch, HistorialMatch, LiveMatch, Sport, StandingRow, Team, ZoneStandings } from "@/types";
 
 /**
  * Datos de ejemplo para que la app se vea completa sin depender de Supabase.
@@ -18,6 +18,23 @@ const T = {
   alberdi: team("alberdi", "Alberdi", "#6B4FA3")
 };
 
+function row(team: Team, played: number, goalDiff: number, points: number, qualifies: boolean, amarillas = 0, rojas = 0): StandingRow {
+  return { team, played, goalDiff, points, amarillas, rojas, qualifies, empatado: false };
+}
+
+function bracket(
+  round: string,
+  home: Team,
+  away: Team,
+  rest: { homeScore: number | null; awayScore: number | null; winnerId: string | null; pending: boolean; scheduledTime?: string }
+): BracketMatch {
+  return { round, home, away, penalesHome: null, penalesAway: null, ...rest };
+}
+
+function hist(id: string, home: Team, away: Team, homeScore: number, awayScore: number, roundLabel: string, date: string): HistorialMatch {
+  return { id, home, away, homeScore, awayScore, penalesHome: null, penalesAway: null, roundLabel, date };
+}
+
 export function dataKey(sport: Sport, branch: Branch): string {
   return sport === "basquet" ? "basquet" : `${sport}:${branch}`;
 }
@@ -26,6 +43,7 @@ interface SportData {
   live: LiveMatch[];
   zones: ZoneStandings[];
   bracket: BracketMatch[];
+  historial: HistorialMatch[];
 }
 
 const futbolMasc: SportData = {
@@ -59,42 +77,22 @@ const futbolMasc: SportData = {
     {
       id: "zona-a",
       nombre: "Zona A",
-      rows: [
-        { team: T.sanMartin, played: 3, goalDiff: 6, points: 9, qualifies: true },
-        { team: T.belgrano, played: 3, goalDiff: 3, points: 7, qualifies: true },
-        { team: T.sarmiento, played: 3, goalDiff: -1, points: 3, qualifies: false }
-      ]
+      rows: [row(T.sanMartin, 3, 6, 9, true), row(T.belgrano, 3, 3, 7, true), row(T.sarmiento, 3, -1, 3, false)]
     },
     {
       id: "zona-b",
       nombre: "Zona B",
-      rows: [
-        { team: T.mitre, played: 3, goalDiff: -2, points: 3, qualifies: false },
-        { team: T.moreno, played: 3, goalDiff: -4, points: 1, qualifies: false },
-        { team: T.guemes, played: 3, goalDiff: -2, points: 0, qualifies: false }
-      ]
+      rows: [row(T.mitre, 3, -2, 3, false), row(T.moreno, 3, -4, 1, false), row(T.guemes, 3, -2, 0, false)]
     }
   ],
   bracket: [
-    {
-      round: "Semifinal",
-      home: T.sanMartin,
-      away: T.mitre,
-      homeScore: 2,
-      awayScore: 1,
-      winnerId: T.sanMartin.id,
-      pending: false
-    },
-    {
-      round: "Final",
-      home: T.sanMartin,
-      away: T.belgrano,
-      homeScore: null,
-      awayScore: null,
-      winnerId: null,
-      pending: true,
-      scheduledTime: "18:00"
-    }
+    bracket("Semifinal", T.sanMartin, T.mitre, { homeScore: 2, awayScore: 1, winnerId: T.sanMartin.id, pending: false }),
+    bracket("Final", T.sanMartin, T.belgrano, { homeScore: null, awayScore: null, winnerId: null, pending: true, scheduledTime: "18:00" })
+  ],
+  historial: [
+    hist("h-fm-1", T.sanMartin, T.mitre, 2, 1, "Semifinal", "19/10"),
+    hist("h-fm-2", T.belgrano, T.sarmiento, 2, 1, "Zona A", "18/10"),
+    hist("h-fm-3", T.mitre, T.moreno, 3, 0, "Zona B", "18/10")
   ]
 };
 
@@ -117,26 +115,11 @@ const futbolFem: SportData = {
     {
       id: "unica",
       nombre: "",
-      rows: [
-        { team: T.belgrano, played: 2, goalDiff: 3, points: 6, qualifies: true },
-        { team: T.alberdi, played: 2, goalDiff: 1, points: 4, qualifies: true },
-        { team: T.rivadavia, played: 2, goalDiff: -1, points: 1, qualifies: false },
-        { team: T.sarmiento, played: 2, goalDiff: -3, points: 0, qualifies: false }
-      ]
+      rows: [row(T.belgrano, 2, 3, 6, true), row(T.alberdi, 2, 1, 4, true), row(T.rivadavia, 2, -1, 1, false), row(T.sarmiento, 2, -3, 0, false)]
     }
   ],
-  bracket: [
-    {
-      round: "Final",
-      home: T.belgrano,
-      away: T.alberdi,
-      homeScore: null,
-      awayScore: null,
-      winnerId: null,
-      pending: true,
-      scheduledTime: "17:30"
-    }
-  ]
+  bracket: [bracket("Final", T.belgrano, T.alberdi, { homeScore: null, awayScore: null, winnerId: null, pending: true, scheduledTime: "17:30" })],
+  historial: [hist("h-ff-1", T.belgrano, T.sarmiento, 3, 1, "Fase de grupos", "18/10")]
 };
 
 const voleyMasc: SportData = {
@@ -158,26 +141,11 @@ const voleyMasc: SportData = {
     {
       id: "unica",
       nombre: "",
-      rows: [
-        { team: T.mitre, played: 3, goalDiff: 4, points: 8, qualifies: true },
-        { team: T.guemes, played: 3, goalDiff: 1, points: 6, qualifies: true },
-        { team: T.moreno, played: 3, goalDiff: -2, points: 3, qualifies: false },
-        { team: T.sanMartin, played: 3, goalDiff: -3, points: 2, qualifies: false }
-      ]
+      rows: [row(T.mitre, 3, 4, 8, true), row(T.guemes, 3, 1, 6, true), row(T.moreno, 3, -2, 3, false), row(T.sanMartin, 3, -3, 2, false)]
     }
   ],
-  bracket: [
-    {
-      round: "Final",
-      home: T.mitre,
-      away: T.guemes,
-      homeScore: null,
-      awayScore: null,
-      winnerId: null,
-      pending: true,
-      scheduledTime: "16:45"
-    }
-  ]
+  bracket: [bracket("Final", T.mitre, T.guemes, { homeScore: null, awayScore: null, winnerId: null, pending: true, scheduledTime: "16:45" })],
+  historial: [hist("h-vm-1", T.mitre, T.moreno, 3, 1, "Fase de grupos", "18/10")]
 };
 
 const voleyFem: SportData = {
@@ -199,26 +167,11 @@ const voleyFem: SportData = {
     {
       id: "unica",
       nombre: "",
-      rows: [
-        { team: T.sanMartin, played: 3, goalDiff: 5, points: 9, qualifies: true },
-        { team: T.belgrano, played: 3, goalDiff: 2, points: 6, qualifies: true },
-        { team: T.moreno, played: 3, goalDiff: -3, points: 2, qualifies: false },
-        { team: T.alberdi, played: 3, goalDiff: -4, points: 1, qualifies: false }
-      ]
+      rows: [row(T.sanMartin, 3, 5, 9, true), row(T.belgrano, 3, 2, 6, true), row(T.moreno, 3, -3, 2, false), row(T.alberdi, 3, -4, 1, false)]
     }
   ],
-  bracket: [
-    {
-      round: "Final",
-      home: T.sanMartin,
-      away: T.belgrano,
-      homeScore: null,
-      awayScore: null,
-      winnerId: null,
-      pending: true,
-      scheduledTime: "17:00"
-    }
-  ]
+  bracket: [bracket("Final", T.sanMartin, T.belgrano, { homeScore: null, awayScore: null, winnerId: null, pending: true, scheduledTime: "17:00" })],
+  historial: [hist("h-vf-1", T.sanMartin, T.alberdi, 3, 2, "Fase de grupos", "18/10")]
 };
 
 const basquet: SportData = {
@@ -240,26 +193,11 @@ const basquet: SportData = {
     {
       id: "unica",
       nombre: "",
-      rows: [
-        { team: T.mitre, played: 3, goalDiff: 12, points: 3, qualifies: true },
-        { team: T.belgrano, played: 3, goalDiff: 4, points: 2, qualifies: true },
-        { team: T.guemes, played: 3, goalDiff: -6, points: 1, qualifies: false },
-        { team: T.sarmiento, played: 3, goalDiff: -10, points: 0, qualifies: false }
-      ]
+      rows: [row(T.mitre, 3, 12, 3, true), row(T.belgrano, 3, 4, 2, true), row(T.guemes, 3, -6, 1, false), row(T.sarmiento, 3, -10, 0, false)]
     }
   ],
-  bracket: [
-    {
-      round: "Final",
-      home: T.mitre,
-      away: T.belgrano,
-      homeScore: null,
-      awayScore: null,
-      winnerId: null,
-      pending: true,
-      scheduledTime: "19:00"
-    }
-  ]
+  bracket: [bracket("Final", T.mitre, T.belgrano, { homeScore: null, awayScore: null, winnerId: null, pending: true, scheduledTime: "19:00" })],
+  historial: [hist("h-b-1", T.mitre, T.sarmiento, 52, 40, "Fase de grupos", "18/10")]
 };
 
 const byKey: Record<string, SportData> = {
@@ -271,7 +209,7 @@ const byKey: Record<string, SportData> = {
 };
 
 export function getMockData(sport: Sport, branch: Branch): SportData {
-  return byKey[dataKey(sport, branch)] ?? { live: [], zones: [], bracket: [] };
+  return byKey[dataKey(sport, branch)] ?? { live: [], zones: [], bracket: [], historial: [] };
 }
 
 export function getMockAllLiveMatches(): LiveMatch[] {

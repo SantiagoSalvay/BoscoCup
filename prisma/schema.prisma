@@ -239,6 +239,9 @@ model Partido {
   estado              PartidoEstado @default(programado)
   resultadoLocal      Int?          @map("resultado_local")
   resultadoVisitante  Int?          @map("resultado_visitante")
+  // Solo se completan en partidos de eliminatoria que terminan empatados.
+  penalesLocal        Int?          @map("penales_local")
+  penalesVisitante    Int?          @map("penales_visitante")
   walkoverEquipoId    String?       @map("walkover_equipo_id") @db.Uuid
   motivoEstado        String?       @map("motivo_estado")
   createdAt           DateTime      @default(now()) @map("created_at")

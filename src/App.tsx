@@ -9,6 +9,7 @@ import { AdminEquipos } from "@/pages/admin/AdminEquipos";
 import { AdminJugadores } from "@/pages/admin/AdminJugadores";
 import { AdminCanchas } from "@/pages/admin/AdminCanchas";
 import { AdminPartidos } from "@/pages/admin/AdminPartidos";
+import { AdminCruces } from "@/pages/admin/AdminCruces";
 import { AdminVeedores } from "@/pages/admin/AdminVeedores";
 import { VeedorLogin } from "@/pages/veedor/VeedorLogin";
 import { VeedorHome } from "@/pages/veedor/VeedorHome";
@@ -35,6 +36,7 @@ export function App() {
             <Route path="jugadores" element={<AdminJugadores />} />
             <Route path="canchas" element={<AdminCanchas />} />
             <Route path="partidos" element={<AdminPartidos />} />
+            <Route path="cruces" element={<AdminCruces />} />
             <Route path="veedores" element={<AdminVeedores />} />
           </Route>
 

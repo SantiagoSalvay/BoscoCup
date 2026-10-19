@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Branch, LiveMatch, Sport } from "@/types";
 import { getMockAllLiveMatches, getMockData } from "@/lib/mock-data";
@@ -25,9 +25,10 @@ const SPORTS: { id: Sport; label: string; icon: typeof IconFutbol }[] = [
   { id: "basquet", label: "Básquet", icon: IconBasquet }
 ];
 
-const EMPTY: PublicData = { zones: [], bracket: [] };
+const EMPTY: PublicData = { zones: [], bracket: [], historial: [] };
 
 type Theme = "system" | "light" | "dark";
+type Pestana = "inicio" | "tabla" | "cruces" | "historial";
 
 export function PublicHome() {
   const [sport, setSport] = useState<Sport>("futbol");
@@ -36,8 +37,19 @@ export function PublicHome() {
   const [data, setData] = useState<PublicData>(EMPTY);
   const [liveMatches, setLiveMatches] = useState<LiveMatch[]>([]);
   const [liveCount, setLiveCount] = useState(0);
+  const [pestana, setPestana] = useState<Pestana>("inicio");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const tablaRef = useRef<HTMLDivElement>(null);
+  const crucesRef = useRef<HTMLDivElement>(null);
 
   const hasBranches = sport !== "basquet";
+
+  function irA(destino: Pestana) {
+    setPestana(destino);
+    if (destino === "inicio") scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    if (destino === "tabla") tablaRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (destino === "cruces") crucesRef.current?.scrollIntoView({ behavior: "smooth" });
+  }
 
   useEffect(() => {
     let active = true;
@@ -113,7 +125,7 @@ export function PublicHome() {
         </div>
       </header>
 
-      <div className="scroll">
+      <div className="scroll" ref={scrollRef}>
         <LiveCarousel matches={liveMatches} />
 
         <nav className="sport-tabs">
@@ -143,8 +155,50 @@ export function PublicHome() {
           </div>
         )}
 
-        <div className="panels">
+        {pestana === "historial" ? (
           <section className="block">
+            <h3>Historial</h3>
+            {data.historial.length === 0 ? (
+              <p className="empty-note">Todavía no hay partidos finalizados</p>
+            ) : (
+              data.historial.map((m) => {
+                const penales = m.penalesHome !== null && m.penalesAway !== null;
+                const homeGana = m.homeScore !== m.awayScore ? m.homeScore > m.awayScore : penales && (m.penalesHome as number) > (m.penalesAway as number);
+                const awayGana = m.homeScore !== m.awayScore ? m.awayScore > m.homeScore : penales && (m.penalesAway as number) > (m.penalesHome as number);
+                return (
+                  <div className="match-pill" key={m.id} style={{ display: "block" }}>
+                    <div className="bracket-round" style={{ margin: "0 0 6px" }}>
+                      {m.roundLabel} {m.date && `· ${m.date}`}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                      <span className={`side ${homeGana ? "winner" : ""}`}>
+                        <Shield className="mini-shield" style={{ width: 12, height: 14 }} fill={m.home.shieldColor} />
+                        {m.home.name}
+                      </span>
+                      <span className="sc tnum">
+                        {m.homeScore}
+                        {penales && <span style={{ fontSize: 11, marginLeft: 4 }}>({m.penalesHome})</span>}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: 6 }}>
+                      <span className={`side ${awayGana ? "winner" : ""}`}>
+                        <Shield className="mini-shield" style={{ width: 12, height: 14 }} fill={m.away.shieldColor} />
+                        {m.away.name}
+                      </span>
+                      <span className="sc tnum">
+                        {m.awayScore}
+                        {penales && <span style={{ fontSize: 11, marginLeft: 4 }}>({m.penalesAway})</span>}
+                      </span>
+                    </div>
+                    {penales && <div className="form-hint" style={{ margin: "6px 0 0" }}>Definido por penales</div>}
+                  </div>
+                );
+              })
+            )}
+          </section>
+        ) : (
+        <div className="panels">
+          <section className="block" ref={tablaRef}>
             <h3>Tabla</h3>
             {data.zones.every((z) => z.rows.length === 0) ? (
               <p className="empty-note">Sin equipos cargados todavía</p>
@@ -159,6 +213,8 @@ export function PublicHome() {
                           <th>Equipo</th>
                           <th>PJ</th>
                           <th>DG</th>
+                          <th>TA</th>
+                          <th>TR</th>
                           <th>Pts</th>
                         </tr>
                       </thead>
@@ -175,53 +231,77 @@ export function PublicHome() {
                               {row.goalDiff > 0 ? "+" : ""}
                               {row.goalDiff}
                             </td>
+                            <td className="tnum">{row.amarillas}</td>
+                            <td className="tnum">{row.rojas}</td>
                             <td className="tnum">{row.points}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
+                  {zone.rows.some((r) => r.empatado) && (
+                    <p className="form-hint form-hint-warn" style={{ margin: "6px 0 0" }}>
+                      Empate total entre {zone.rows.filter((r) => r.empatado).map((r) => r.team.name).join(" y ")} — hace falta
+                      un partido de desempate.
+                    </p>
+                  )}
                 </div>
               ))
             )}
           </section>
 
-          <section className="block">
+          <section className="block" ref={crucesRef}>
             <h3>Cruces</h3>
             {data.bracket.length === 0 && <p className="empty-note">Todavía no hay cruces definidos</p>}
-            {data.bracket.map((m, i) => (
-              <div key={`${m.round}-${i}`}>
-                <div className="bracket-round">{m.round}</div>
-                <div className={`match-pill ${m.pending ? "pending" : ""}`}>
-                  <span className={`side ${m.winnerId === m.home.id ? "winner" : ""}`}>
-                    <Shield className="mini-shield" style={{ width: 12, height: 14 }} fill={m.home.shieldColor} />
-                    {m.home.name}
-                  </span>
-                  {m.pending ? (
-                    <span className="vs-time">{m.scheduledTime}</span>
-                  ) : (
-                    <span className="sc tnum">{m.homeScore}</span>
-                  )}
-                  {m.pending && m.away && (
-                    <span className="side">
-                      <Shield className="mini-shield" style={{ width: 12, height: 14 }} fill={m.away.shieldColor} />
-                      {m.away.name}
+            {data.bracket.map((m, i) => {
+              const penales = m.penalesHome !== null && m.penalesAway !== null;
+              const empatadoSinDefinir = !m.pending && m.homeScore === m.awayScore && !penales;
+              return (
+                <div key={`${m.round}-${i}`}>
+                  <div className="bracket-round">{m.round}</div>
+                  <div className={`match-pill ${m.pending ? "pending" : ""}`}>
+                    <span className={`side ${m.winnerId === m.home.id ? "winner" : ""}`}>
+                      <Shield className="mini-shield" style={{ width: 12, height: 14 }} fill={m.home.shieldColor} />
+                      {m.home.name}
                     </span>
+                    {m.pending ? (
+                      <span className="vs-time">{m.scheduledTime}</span>
+                    ) : (
+                      <span className="sc tnum">
+                        {m.homeScore}
+                        {penales && <span style={{ fontSize: 11, marginLeft: 4 }}>({m.penalesHome})</span>}
+                      </span>
+                    )}
+                    {m.pending && m.away && (
+                      <span className="side">
+                        <Shield className="mini-shield" style={{ width: 12, height: 14 }} fill={m.away.shieldColor} />
+                        {m.away.name}
+                      </span>
+                    )}
+                  </div>
+                  {!m.pending && m.away && (
+                    <div className="match-pill">
+                      <span className={`side ${m.winnerId === m.away.id ? "winner" : ""}`}>
+                        <Shield className="mini-shield" style={{ width: 12, height: 14 }} fill={m.away.shieldColor} />
+                        {m.away.name}
+                      </span>
+                      <span className="sc tnum">
+                        {m.awayScore}
+                        {penales && <span style={{ fontSize: 11, marginLeft: 4 }}>({m.penalesAway})</span>}
+                      </span>
+                    </div>
+                  )}
+                  {empatadoSinDefinir && (
+                    <p className="form-hint form-hint-warn" style={{ margin: "2px 0 8px" }}>
+                      Empate — falta definir por penales.
+                    </p>
                   )}
                 </div>
-                {!m.pending && m.away && (
-                  <div className="match-pill">
-                    <span className={`side ${m.winnerId === m.away.id ? "winner" : ""}`}>
-                      <Shield className="mini-shield" style={{ width: 12, height: 14 }} fill={m.away.shieldColor} />
-                      {m.away.name}
-                    </span>
-                    <span className="sc tnum">{m.awayScore}</span>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </section>
         </div>
+        )}
 
         <div className="role-footer">
           <Link to="/admin/login">Soy organizador</Link>
@@ -231,21 +311,21 @@ export function PublicHome() {
       </div>
 
       <nav className="bottom-nav">
-        <button className="bn active">
+        <button className={`bn ${pestana === "inicio" ? "active" : ""}`} onClick={() => irA("inicio")}>
           <IconHome />
           Inicio
         </button>
-        <button className="bn">
+        <button className={`bn ${pestana === "tabla" ? "active" : ""}`} onClick={() => irA("tabla")}>
           <IconTable />
           Tabla
         </button>
-        <button className="bn">
+        <button className={`bn ${pestana === "cruces" ? "active" : ""}`} onClick={() => irA("cruces")}>
           <IconBracket />
           Cruces
         </button>
-        <button className="bn">
+        <button className={`bn ${pestana === "historial" ? "active" : ""}`} onClick={() => irA("historial")}>
           <IconFollow />
-          Seguir
+          Historial
         </button>
       </nav>
     </div>
