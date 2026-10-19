@@ -44,7 +44,11 @@ Scripts auxiliares (usan `DATABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` del `.env`
 - `node scripts/run-sql.mjs <archivo.sql>` — corre un `.sql` cualquiera contra la base (lo necesitás para `0000_extensions.sql` y `0001_policies.sql`).
 - `node scripts/create-admin.mjs <email> <password> <nombre>` — da de alta un usuario admin (Auth + `profiles`) sin pasar por el Dashboard.
 
-Para cambiar la estructura más adelante: editá `prisma/schema.prisma` y corré `npx prisma db push` de nuevo.
+Para cambiar la estructura **más adelante** (una vez que `0001_policies.sql` ya corrió): **no uses `npx prisma db push`** — Prisma no puede introspeccionar la base porque `profiles` tiene un FK a `auth.users` (un schema que Prisma no conoce) y `db push` corta con el error `P4002`. Intentar "arreglarlo" declarando `auth.users` en el schema es **peligroso**: Prisma pasa a tratar esa tabla como propia y, al no conocer sus columnas reales (las de Supabase Auth), el próximo `db push` propone borrarlas todas — tirarías abajo el login de toda la app. En este proyecto, un cambio de estructura se hace así:
+1. Editá `prisma/schema.prisma` (documentación/tipos — Prisma Client lo usa para generar los tipos de `seed.ts` y los scripts, aunque nunca se vuelva a correr `db push`).
+2. Escribí el `ALTER TABLE`/`CREATE TABLE` a mano en un archivo nuevo de `supabase/migrations/000N_lo-que-sea.sql`.
+3. Corré `node scripts/run-sql.mjs supabase/migrations/000N_lo-que-sea.sql`.
+4. `npx prisma generate` si cambiaste tipos usados por Prisma Client.
 
 ### Primer usuario admin
 

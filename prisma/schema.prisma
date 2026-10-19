@@ -1,13 +1,24 @@
-// Estructura de la base de datos de BoscoCup, para manejar desde Prisma
-// (`npx prisma db push`, `npx prisma studio`).
+// Estructura de la base de datos de BoscoCup — documentación/tipos para
+// Prisma Client (`npx prisma studio`, `prisma/seed.ts`, `scripts/*.mjs`).
 //
 // Importante: esto define TABLAS Y RELACIONES únicamente. Las políticas de
 // Row Level Security (quién puede leer/escribir qué) no se pueden describir
-// en este archivo — viven en supabase/migrations/0001_policies.sql y hay que
-// aplicarlas con SQL después de correr `db push`. El front-end (src/) sigue
-// hablando con la base vía @supabase/supabase-js, NO vía Prisma Client: Prisma
-// necesita una conexión directa a Postgres, que nunca debe viajar al navegador.
-// Prisma Client/CLI son solo herramientas de administración (seed, Studio).
+// en este archivo — viven en supabase/migrations/0001_policies.sql. El
+// front-end (src/) sigue hablando con la base vía @supabase/supabase-js, NO
+// vía Prisma Client: Prisma necesita una conexión directa a Postgres, que
+// nunca debe viajar al navegador. Prisma Client/CLI son solo herramientas de
+// administración (seed, Studio).
+//
+// ⚠️ `npx prisma db push` SOLO funciona para el setup inicial, antes de
+// correr 0001_policies.sql. Una vez que esa migración crea el FK de
+// `profiles.id` -> `auth.users.id`, cualquier `db push` posterior corta con
+// el error P4002 (Prisma no conoce el schema "auth"). NO lo arregles
+// agregando `auth` a `datasource.schemas` + un modelo de `auth.users`: sin
+// conocer sus columnas reales, Prisma va a proponer BORRARLAS todas (y las
+// tablas `identities`/`schema_migrations`) en el próximo push — reventaría
+// el login de la app entera. Para cambios de estructura futuros: escribí el
+// SQL a mano en supabase/migrations/000N_*.sql y corré
+// `node scripts/run-sql.mjs supabase/migrations/000N_*.sql` (ver README).
 
 generator client {
   provider = "prisma-client-js"
