@@ -1,0 +1,17 @@
+-- Los datos iniciales del torneo (torneo, 5 categorías, 5 canchas) ahora se
+-- cargan con Prisma: npx prisma db seed  →  ver prisma/seed.ts
+
+-- ============================================================================
+-- Primer usuario admin
+-- ============================================================================
+-- 1) Creá el usuario desde el Dashboard de Supabase: Authentication → Users → Add user
+--    (con email y contraseña; tildar "Auto confirm user").
+-- 2) Copiá su UUID y ejecutá, reemplazando los valores:
+--
+-- insert into profiles (id, nombre, rol)
+-- values ('<uuid-del-usuario>', 'Nombre del admin', 'admin');
+--
+-- Importante: en Authentication → Providers → Email, desactivar "Confirm email".
+-- Los veedores se crean desde el panel admin con un PIN de 6 dígitos que
+-- funciona como usuario y contraseña (login rápido al pie de la cancha); sin
+-- confirmación de email automática ese alta no se completaría.
