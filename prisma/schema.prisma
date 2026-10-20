@@ -260,10 +260,10 @@ model Partido {
 
   categoria       Categoria @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
   grupo           Grupo?    @relation(fields: [grupoId], references: [id], onDelete: SetNull)
-  equipoLocal     Equipo    @relation("partidoEquipoLocal", fields: [equipoLocalId], references: [id])
-  equipoVisitante Equipo?   @relation("partidoEquipoVisitante", fields: [equipoVisitanteId], references: [id])
+  equipoLocal     Equipo    @relation("partidoEquipoLocal", fields: [equipoLocalId], references: [id], onDelete: Cascade)
+  equipoVisitante Equipo?   @relation("partidoEquipoVisitante", fields: [equipoVisitanteId], references: [id], onDelete: Cascade)
   cancha          Cancha?   @relation(fields: [canchaId], references: [id])
-  walkoverEquipo  Equipo?   @relation("partidoWalkoverEquipo", fields: [walkoverEquipoId], references: [id])
+  walkoverEquipo  Equipo?   @relation("partidoWalkoverEquipo", fields: [walkoverEquipoId], references: [id], onDelete: SetNull)
 
   asignacionVeedor AsignacionVeedor?
   eventos          EventoPartido[]
@@ -300,9 +300,9 @@ model EventoPartido {
   creadoEn            DateTime @default(now()) @map("creado_en")
 
   partido           Partido  @relation(fields: [partidoId], references: [id], onDelete: Cascade)
-  equipo            Equipo?  @relation("eventoEquipo", fields: [equipoId], references: [id])
-  jugador           Jugador? @relation("eventoJugador", fields: [jugadorId], references: [id])
-  jugadorAsistencia Jugador? @relation("eventoAsistencia", fields: [jugadorAsistenciaId], references: [id])
+  equipo            Equipo?  @relation("eventoEquipo", fields: [equipoId], references: [id], onDelete: Cascade)
+  jugador           Jugador? @relation("eventoJugador", fields: [jugadorId], references: [id], onDelete: SetNull)
+  jugadorAsistencia Jugador? @relation("eventoAsistencia", fields: [jugadorAsistenciaId], references: [id], onDelete: SetNull)
   creador           Profile? @relation("eventosCreadosPor", fields: [creadoPor], references: [id])
 
   @@index([partidoId, creadoEn])
@@ -318,7 +318,7 @@ model SetVoley {
   ganadorEquipoId String? @map("ganador_equipo_id") @db.Uuid
 
   partido       Partido @relation(fields: [partidoId], references: [id], onDelete: Cascade)
-  ganadorEquipo Equipo? @relation("setGanador", fields: [ganadorEquipoId], references: [id])
+  ganadorEquipo Equipo? @relation("setGanador", fields: [ganadorEquipoId], references: [id], onDelete: SetNull)
 
   @@unique([partidoId, numeroSet])
   @@map("sets_voley")
@@ -346,8 +346,8 @@ model Formacion {
   numeroCamisetaPartido Int?    @map("numero_camiseta_partido")
 
   partido Partido @relation(fields: [partidoId], references: [id], onDelete: Cascade)
-  equipo  Equipo  @relation(fields: [equipoId], references: [id])
-  jugador Jugador @relation(fields: [jugadorId], references: [id])
+  equipo  Equipo  @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  jugador Jugador @relation(fields: [jugadorId], references: [id], onDelete: Cascade)
 
   @@unique([partidoId, jugadorId])
   @@map("formaciones")
@@ -369,8 +369,8 @@ model Sancion {
   creadoEn            DateTime @default(now()) @map("creado_en")
 
   jugador       Jugador  @relation(fields: [jugadorId], references: [id], onDelete: Cascade)
-  equipo        Equipo   @relation(fields: [equipoId], references: [id])
-  partidoOrigen Partido? @relation(fields: [partidoOrigenId], references: [id])
+  equipo        Equipo   @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  partidoOrigen Partido? @relation(fields: [partidoOrigenId], references: [id], onDelete: SetNull)
   creador       Profile? @relation("sancionesCreadasPor", fields: [creadoPor], references: [id])
 
   @@map("sanciones")
@@ -387,7 +387,7 @@ model Aviso {
   creadoEn  DateTime @default(now()) @map("creado_en")
 
   torneo  Torneo   @relation(fields: [torneoId], references: [id], onDelete: Cascade)
-  partido Partido? @relation(fields: [partidoId], references: [id])
+  partido Partido? @relation(fields: [partidoId], references: [id], onDelete: SetNull)
   creador Profile? @relation("avisosCreadosPor", fields: [creadoPor], references: [id])
 
   @@map("avisos")

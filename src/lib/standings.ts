@@ -19,7 +19,8 @@ export function computeStandings(
   equipos: EquipoRow[],
   partidosFinalizados: PartidoRow[],
   cat: Categoria,
-  tarjetas: Map<string, Tarjetas> = new Map()
+  tarjetas: Map<string, Tarjetas> = new Map(),
+  completa = false
 ): StandingRow[] {
   interface Agg {
     pj: number;
@@ -64,7 +65,13 @@ export function computeStandings(
       const points = a.pg * cat.puntos_victoria + a.pe * cat.puntos_empate + a.pp * cat.puntos_derrota;
       return {
         team: teamFrom(e),
+        position: 0,
         played: a.pj,
+        won: a.pg,
+        drawn: a.pe,
+        lost: a.pp,
+        goalsFor: a.gf,
+        goalsAgainst: a.gc,
         goalDiff: a.gf - a.gc,
         points,
         amarillas: t.amarillas,
@@ -75,10 +82,15 @@ export function computeStandings(
     })
     .sort((a, b) => b.points - a.points || b.goalDiff - a.goalDiff || a.amarillas - b.amarillas || a.rojas - b.rojas);
 
+  const hayJugados = rows.some((r) => r.played > 0);
   rows.forEach((row, i) => {
-    row.qualifies = i < cat.cantidad_clasifican_por_grupo;
+    row.position = i + 1;
+    row.qualifies = hayJugados && i < cat.cantidad_clasifican_por_grupo;
   });
 
+  // El aviso de desempate solo tiene sentido con la zona terminada: antes de
+  // eso (o con todos en cero) "empatados" es simplemente "todavía no jugaron".
+  if (!completa) return rows;
   for (let i = 0; i < rows.length; i++) {
     if (estanEmpatados(rows[i], rows[i - 1]) || estanEmpatados(rows[i], rows[i + 1])) {
       rows[i].empatado = true;
@@ -92,6 +104,26 @@ export function computeStandings(
 export function estanEmpatados(a?: StandingRow, b?: StandingRow): boolean {
   if (!a || !b) return false;
   return a.points === b.points && a.goalDiff === b.goalDiff && a.amarillas === b.amarillas && a.rojas === b.rojas;
+}
+
+/**
+ * La fase de grupos de una zona terminó cuando no queda ningún partido sin
+ * finalizar Y todos los equipos ya se enfrentaron entre sí. Lo segundo evita
+ * declarar "terminada" una zona solo porque todavía no se programaron las
+ * fechas que faltan.
+ */
+function zonaCompleta(equipoIds: string[], partidosZona: PartidoRow[]): boolean {
+  if (equipoIds.length < 2 || partidosZona.length === 0) return false;
+  if (partidosZona.some((p) => p.estado !== "finalizado")) return false;
+  const jugados = new Set(
+    partidosZona.map((p) => [p.equipo_local_id, p.equipo_visitante_id as string].sort().join("|"))
+  );
+  for (let i = 0; i < equipoIds.length; i++) {
+    for (let j = i + 1; j < equipoIds.length; j++) {
+      if (!jugados.has([equipoIds[i], equipoIds[j]].sort().join("|"))) return false;
+    }
+  }
+  return true;
 }
 
 export interface ZonasCategoria {
@@ -144,7 +176,8 @@ export async function computeZonesForCategoria(cat: Categoria): Promise<ZonasCat
   const equipos = (equiposData as EquipoRow[]) ?? [];
   const partidos = (partidosData as PartidoRow[]) ?? [];
   const grupos = (gruposData as GrupoRow[]) ?? [];
-  const finalizadosDeGrupo = partidos.filter((p) => p.estado === "finalizado" && !p.ronda_eliminatoria);
+  const partidosDeGrupo = partidos.filter((p) => !p.ronda_eliminatoria && p.equipo_visitante_id);
+  const finalizadosDeGrupo = partidosDeGrupo.filter((p) => p.estado === "finalizado");
   const tarjetas = await cardCountsFor(finalizadosDeGrupo.map((p) => p.id));
 
   let zones: ZoneStandings[];
@@ -157,14 +190,28 @@ export async function computeZonesForCategoria(cat: Categoria): Promise<ZonasCat
         grupos.map((g) => g.id)
       );
     const ge = (geData as { grupo_id: string; equipo_id: string }[]) ?? [];
-    zones = grupos.map((g) => {
-      const equipoIds = new Set(ge.filter((x) => x.grupo_id === g.id).map((x) => x.equipo_id));
-      const equiposZona = equipos.filter((e) => equipoIds.has(e.id));
-      const partidosZona = finalizadosDeGrupo.filter((p) => p.grupo_id === g.id);
-      return { id: g.id, nombre: g.nombre, rows: computeStandings(equiposZona, partidosZona, cat, tarjetas) };
-    });
+    zones = [...grupos]
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+      .map((g) => {
+        const equipoIds = new Set(ge.filter((x) => x.grupo_id === g.id).map((x) => x.equipo_id));
+        const equiposZona = equipos.filter((e) => equipoIds.has(e.id));
+        // Partido de la zona: el que tiene el grupo cargado, o (si se programó
+        // sin grupo) el que enfrenta a dos equipos de esta misma zona.
+        const deLaZona = (p: PartidoRow) =>
+          p.grupo_id === g.id ||
+          (!p.grupo_id && equipoIds.has(p.equipo_local_id) && !!p.equipo_visitante_id && equipoIds.has(p.equipo_visitante_id));
+        const partidosZona = partidosDeGrupo.filter(deLaZona);
+        const completa = zonaCompleta(equiposZona.map((e) => e.id), partidosZona);
+        return {
+          id: g.id,
+          nombre: g.nombre,
+          completa,
+          rows: computeStandings(equiposZona, partidosZona.filter((p) => p.estado === "finalizado"), cat, tarjetas, completa)
+        };
+      });
   } else {
-    zones = [{ id: "general", nombre: "", rows: computeStandings(equipos, finalizadosDeGrupo, cat, tarjetas) }];
+    const completa = zonaCompleta(equipos.map((e) => e.id), partidosDeGrupo);
+    zones = [{ id: "general", nombre: "", completa, rows: computeStandings(equipos, finalizadosDeGrupo, cat, tarjetas, completa) }];
   }
 
   return { zones, equipos, partidos, grupos };
