@@ -17,6 +17,7 @@ export function AdminJugadores() {
   const [nombre, setNombre] = useState("");
   const [numero, setNumero] = useState("");
   const [posicion, setPosicion] = useState("");
+  const [editando, setEditando] = useState<{ id: string; nombre: string; numero: string; posicion: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,6 +54,7 @@ export function AdminJugadores() {
   }
 
   useEffect(() => {
+    setEditando(null);
     loadJugadores(equipoId);
   }, [equipoId]);
 
@@ -74,9 +76,33 @@ export function AdminJugadores() {
     loadJugadores(equipoId);
   }
 
-  async function onDelete(id: string) {
+  async function onGuardarEdicion() {
+    if (!supabase || !editando) return;
+    setError(null);
+    const { error: err } = await supabase
+      .from("jugadores")
+      .update({
+        nombre: editando.nombre,
+        numero: editando.numero ? Number(editando.numero) : null,
+        posicion: editando.posicion || null
+      })
+      .eq("id", editando.id);
+    if (err) {
+      return setError(err.code === "23505" ? `Ya hay otro jugador con el número ${editando.numero} en este equipo.` : err.message);
+    }
+    setEditando(null);
+    loadJugadores(equipoId);
+  }
+
+  async function onDelete(j: JugadorRow) {
     if (!supabase) return;
-    await supabase.from("jugadores").delete().eq("id", id);
+    const ok = window.confirm(
+      `¿Eliminar a ${j.nombre}?\n\nSus goles y tarjetas ya cargados se conservan en los resultados, pero sin nombre. No se puede deshacer.`
+    );
+    if (!ok) return;
+    setError(null);
+    const { error: err } = await supabase.from("jugadores").delete().eq("id", j.id);
+    if (err) return setError(`No se pudo eliminar: ${err.message}`);
     loadJugadores(equipoId);
   }
 
@@ -137,18 +163,65 @@ export function AdminJugadores() {
             </tr>
           </thead>
           <tbody>
-            {jugadores.map((j) => (
-              <tr key={j.id}>
-                <td className="tnum">{j.numero ?? "—"}</td>
-                <td>{j.nombre}</td>
-                <td>{j.posicion ?? "—"}</td>
-                <td>
-                  <button className="btn btn-danger btn-sm" onClick={() => onDelete(j.id)}>
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {jugadores.map((j) =>
+              editando?.id === j.id ? (
+                <tr key={j.id}>
+                  <td style={{ width: 80 }}>
+                    <input
+                      className="input input-sm"
+                      inputMode="numeric"
+                      value={editando.numero}
+                      onChange={(e) => setEditando({ ...editando, numero: e.target.value.replace(/\D/g, "") })}
+                      aria-label="Número"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="input input-sm"
+                      value={editando.nombre}
+                      onChange={(e) => setEditando({ ...editando, nombre: e.target.value })}
+                      aria-label="Nombre"
+                      autoFocus
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="input input-sm"
+                      value={editando.posicion}
+                      onChange={(e) => setEditando({ ...editando, posicion: e.target.value })}
+                      aria-label="Posición"
+                    />
+                  </td>
+                  <td className="row-actions">
+                    <button className="btn btn-primary btn-sm" onClick={onGuardarEdicion} disabled={!editando.nombre.trim()}>
+                      Guardar
+                    </button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => setEditando(null)}>
+                      Cancelar
+                    </button>
+                  </td>
+                </tr>
+              ) : (
+                <tr key={j.id}>
+                  <td className="tnum">{j.numero ?? "—"}</td>
+                  <td>{j.nombre}</td>
+                  <td>{j.posicion ?? "—"}</td>
+                  <td className="row-actions">
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() =>
+                        setEditando({ id: j.id, nombre: j.nombre, numero: j.numero?.toString() ?? "", posicion: j.posicion ?? "" })
+                      }
+                    >
+                      Editar
+                    </button>
+                    <button className="btn btn-danger btn-sm" onClick={() => onDelete(j)}>
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              )
+            )}
             {jugadores.length === 0 && (
               <tr>
                 <td colSpan={4} className="empty-row">

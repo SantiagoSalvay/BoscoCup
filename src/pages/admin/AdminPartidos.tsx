@@ -99,8 +99,25 @@ export function AdminPartidos() {
     if (!supabase) return setError("Supabase no está configurado.");
     if (localId === visitanteId) return setError("Local y visitante no pueden ser el mismo equipo.");
 
+    // Si los dos equipos están en el mismo grupo, el partido suma en la tabla de ese grupo.
+    const { data: gruposData } = await supabase.from("grupos").select("id").eq("categoria_id", categoriaId);
+    const grupoIds = ((gruposData as { id: string }[]) ?? []).map((g) => g.id);
+    let grupoId: string | null = null;
+    if (grupoIds.length > 0) {
+      const { data: geData } = await supabase
+        .from("grupo_equipos")
+        .select("grupo_id, equipo_id")
+        .in("grupo_id", grupoIds)
+        .in("equipo_id", [localId, visitanteId]);
+      const ge = (geData as { grupo_id: string; equipo_id: string }[]) ?? [];
+      const grupoLocal = ge.find((x) => x.equipo_id === localId)?.grupo_id;
+      const grupoVisitante = ge.find((x) => x.equipo_id === visitanteId)?.grupo_id;
+      if (grupoLocal && grupoLocal === grupoVisitante) grupoId = grupoLocal;
+    }
+
     const { error: err } = await supabase.from("partidos").insert({
       categoria_id: categoriaId,
+      grupo_id: grupoId,
       equipo_local_id: localId,
       equipo_visitante_id: visitanteId || null,
       cancha_id: canchaId || null,
@@ -108,6 +125,15 @@ export function AdminPartidos() {
     });
     if (err) return setError(err.message);
     setHorario("");
+    loadPartidos(categoriaId);
+  }
+
+  async function onDelete(p: PartidoConNombres) {
+    if (!supabase) return;
+    if (!window.confirm(`¿Eliminar ${p.local_nombre} vs. ${p.visitante_nombre}? Se borran también sus eventos cargados.`)) return;
+    setError(null);
+    const { error: err } = await supabase.from("partidos").delete().eq("id", p.id);
+    if (err) return setError(`No se pudo eliminar: ${err.message}`);
     loadPartidos(categoriaId);
   }
 
@@ -193,6 +219,7 @@ export function AdminPartidos() {
               <th>Horario</th>
               <th>Estado</th>
               <th>Veedor</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -220,11 +247,16 @@ export function AdminPartidos() {
                     ))}
                   </select>
                 </td>
+                <td className="row-actions">
+                  <button className="btn btn-danger btn-sm" onClick={() => onDelete(p)}>
+                    Eliminar
+                  </button>
+                </td>
               </tr>
             ))}
             {partidos.length === 0 && (
               <tr>
-                <td colSpan={5} className="empty-row">
+                <td colSpan={6} className="empty-row">
                   Todavía no hay partidos programados en esta categoría.
                 </td>
               </tr>
