@@ -1,10 +1,35 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import type { CanchaRow, Categoria, EquipoRow, PartidoRow, Profile } from "@/lib/db-types";
 
 function categoriaLabel(c: Categoria): string {
   const deporte = c.deporte[0].toUpperCase() + c.deporte.slice(1);
   return `${deporte} · ${c.rama}`;
+}
+
+const ROUND_ORDER = ["Octavos", "Cuartos", "Semifinal", "3er puesto", "Final"];
+
+/** ISO -> valor de <input type="datetime-local"> en hora local ("2026-10-20T18:30"). */
+function aInputLocal(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function horarioCorto(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return `${d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" })} ${d.toLocaleTimeString("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit"
+  })}`;
+}
+
+/** Los cruces sin jugar son los únicos que se programan desde su propia fila. */
+function esCruceEditable(p: PartidoRow): boolean {
+  return Boolean(p.ronda_eliminatoria) && p.estado !== "finalizado";
 }
 
 interface PartidoConNombres extends PartidoRow {
@@ -15,6 +40,7 @@ interface PartidoConNombres extends PartidoRow {
 }
 
 export function AdminPartidos() {
+  const [searchParams] = useSearchParams();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [categoriaId, setCategoriaId] = useState("");
   const [equipos, setEquipos] = useState<EquipoRow[]>([]);
@@ -27,6 +53,9 @@ export function AdminPartidos() {
   const [canchaId, setCanchaId] = useState("");
   const [horario, setHorario] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  /** Horario que se está tipeando en una fila de cruce, antes de guardarlo. */
+  const [horarioDraft, setHorarioDraft] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!supabase) return;
@@ -37,7 +66,9 @@ export function AdminPartidos() {
       .then(({ data }) => {
         const list = (data as Categoria[]) ?? [];
         setCategorias(list);
-        if (list.length > 0) setCategoriaId(list[0].id);
+        const pedida = searchParams.get("categoria");
+        if (pedida && list.some((c) => c.id === pedida)) setCategoriaId(pedida);
+        else if (list.length > 0) setCategoriaId(list[0].id);
       });
     supabase
       .from("canchas")
@@ -82,6 +113,13 @@ export function AdminPartidos() {
     const canchaNombre = new Map((canchasData ?? []).map((c: { id: string; nombre: string }) => [c.id, c.nombre]));
     const asignacionPorPartido = new Map((asignaciones ?? []).map((a: { partido_id: string; veedor_id: string }) => [a.partido_id, a.veedor_id]));
 
+    // Fase de grupos primero (por horario), después los cruces en orden de ronda.
+    rows.sort((a, b) => {
+      const ra = a.ronda_eliminatoria ? ROUND_ORDER.indexOf(a.ronda_eliminatoria) + 1 : 0;
+      const rb = b.ronda_eliminatoria ? ROUND_ORDER.indexOf(b.ronda_eliminatoria) + 1 : 0;
+      return ra - rb || (a.fecha_hora_programada ?? "~").localeCompare(b.fecha_hora_programada ?? "~");
+    });
+    setHorarioDraft({});
     setPartidos(
       rows.map((p) => ({
         ...p,
@@ -137,6 +175,37 @@ export function AdminPartidos() {
     loadPartidos(categoriaId);
   }
 
+  /** Guarda cancha y/o horario de un cruce y avisa si choca con otro partido en la misma cancha. */
+  async function onProgramarCruce(p: PartidoConNombres, cambios: { cancha_id?: string | null; fecha_hora_programada?: string | null }) {
+    if (!supabase) return;
+    setError(null);
+    setAviso(null);
+    const { error: err } = await supabase.from("partidos").update(cambios).eq("id", p.id);
+    if (err) return setError(`No se pudo guardar: ${err.message}`);
+
+    const cancha = cambios.cancha_id !== undefined ? cambios.cancha_id : p.cancha_id;
+    const fecha = cambios.fecha_hora_programada !== undefined ? cambios.fecha_hora_programada : p.fecha_hora_programada;
+    if (cancha && fecha) {
+      const { data: choques } = await supabase
+        .from("partidos")
+        .select("id")
+        .eq("cancha_id", cancha)
+        .eq("fecha_hora_programada", fecha)
+        .neq("id", p.id);
+      if ((choques ?? []).length > 0) {
+        const nombre = canchas.find((c) => c.id === cancha)?.nombre ?? "esa cancha";
+        setAviso(`Ojo: ya hay otro partido en ${nombre} a las ${horarioCorto(fecha)}.`);
+      }
+    }
+    loadPartidos(categoriaId);
+  }
+
+  function onHorarioCruce(p: PartidoConNombres) {
+    const valor = horarioDraft[p.id];
+    if (valor === undefined || valor === aInputLocal(p.fecha_hora_programada)) return;
+    onProgramarCruce(p, { fecha_hora_programada: valor ? new Date(valor).toISOString() : null });
+  }
+
   async function onAsignarVeedor(partidoId: string, veedorId: string) {
     if (!supabase) return;
     if (!veedorId) {
@@ -147,12 +216,15 @@ export function AdminPartidos() {
     loadPartidos(categoriaId);
   }
 
+  const deporte = categorias.find((c) => c.id === categoriaId)?.deporte;
+  const canchasCompatibles = canchas.filter((c) => !deporte || !c.deportes_compatibles?.length || c.deportes_compatibles.includes(deporte));
+
   return (
     <div>
       <h2 className="page-title">Partidos</h2>
       <p className="form-hint">
-        Carga manual por ahora — el auto-programador con detección de conflictos de horario/cancha es la
-        próxima fase.
+        Los partidos de fase de grupos se programan con el formulario. Los cruces se generan desde la sección
+        Cruces y acá les elegís cancha y horario directamente en su fila.
       </p>
 
       <label className="field" style={{ maxWidth: 320, marginBottom: 20 }}>
@@ -209,6 +281,7 @@ export function AdminPartidos() {
         </button>
       </form>
       {error && <p className="form-error">{error}</p>}
+      {aviso && <p className="form-hint form-hint-warn">{aviso}</p>}
 
       <div className="table-wrap">
         <table className="data-table">
@@ -223,16 +296,49 @@ export function AdminPartidos() {
             </tr>
           </thead>
           <tbody>
-            {partidos.map((p) => (
-              <tr key={p.id}>
+            {partidos.map((p) => {
+              const editable = esCruceEditable(p);
+              const faltaProgramar = editable && (!p.cancha_id || !p.fecha_hora_programada);
+              return (
+              <tr key={p.id} className={faltaProgramar ? "row-pending" : ""}>
                 <td>
                   {p.local_nombre} vs. {p.visitante_nombre}
+                  {p.ronda_eliminatoria && <span className="round-tag">{p.ronda_eliminatoria}</span>}
+                  {faltaProgramar && <span className="row-note">Falta {!p.cancha_id && !p.fecha_hora_programada ? "cancha y horario" : !p.cancha_id ? "cancha" : "horario"}</span>}
                 </td>
-                <td>{p.cancha_nombre}</td>
+                <td>
+                  {editable ? (
+                    <select
+                      className="input input-sm"
+                      value={p.cancha_id ?? ""}
+                      onChange={(e) => onProgramarCruce(p, { cancha_id: e.target.value || null })}
+                      aria-label={`Cancha de ${p.local_nombre} vs. ${p.visitante_nombre}`}
+                    >
+                      <option value="">Sin asignar</option>
+                      {canchasCompatibles.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    p.cancha_nombre
+                  )}
+                </td>
                 <td className="tnum">
-                  {p.fecha_hora_programada
-                    ? new Date(p.fecha_hora_programada).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })
-                    : "—"}
+                  {editable ? (
+                    <input
+                      className="input input-sm"
+                      type="datetime-local"
+                      value={horarioDraft[p.id] ?? aInputLocal(p.fecha_hora_programada)}
+                      onChange={(e) => setHorarioDraft((d) => ({ ...d, [p.id]: e.target.value }))}
+                      onBlur={() => onHorarioCruce(p)}
+                      onKeyDown={(e) => e.key === "Enter" && (e.currentTarget as HTMLInputElement).blur()}
+                      aria-label={`Horario de ${p.local_nombre} vs. ${p.visitante_nombre}`}
+                    />
+                  ) : (
+                    horarioCorto(p.fecha_hora_programada)
+                  )}
                 </td>
                 <td>
                   <span className="badge-estado">{p.estado}</span>
@@ -253,7 +359,8 @@ export function AdminPartidos() {
                   </button>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {partidos.length === 0 && (
               <tr>
                 <td colSpan={6} className="empty-row">
