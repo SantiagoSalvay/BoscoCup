@@ -119,61 +119,12 @@ export function PublicHome() {
   const sportColor = `var(--color-${sport})`;
 
   return (
-<<<<<<< HEAD
-    <div className="shell">
-      <header className="ph-head">
-        <div className="wordmark">
-          <LogoMark className="logo-mark" aria-hidden="true" />
-          Bosco<span className="cup">Cup</span>
-        </div>
-        <div className="head-right">
-          <div className="live-count">
-            <span className="dot" />
-            {liveCount} EN VIVO
-          </div>
-          <button
-            className="theme-btn"
-            type="button"
-            aria-pressed={theme === "light"}
-            aria-label="Tema claro"
-            onClick={() => toggleTheme("light")}
-          >
-            <IconSun />
-          </button>
-          <button
-            className="theme-btn"
-            type="button"
-            aria-pressed={theme === "dark"}
-            aria-label="Tema oscuro"
-            onClick={() => toggleTheme("dark")}
-          >
-            <IconMoon />
-          </button>
-        </div>
-      </header>
-
-      <div className="scroll" ref={scrollRef}>
-        <LiveCarousel matches={liveMatches} />
-
-        <nav className="sport-tabs">
-          {SPORTS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              className={`sport-tab ${id} ${sport === id ? "active" : ""}`}
-              onClick={() => setSport(id)}
-            >
-              <Icon />
-              {label}
-            </button>
-          ))}
-        </nav>
-
-=======
     <div className="pub" style={{ "--sport": sportColor } as CSSProperties}>
       <DynamicIsland matches={liveMatches} onTeam={abrirDesdeVivo} />
 
       <header className="pub-head">
         <h1 className="pub-title">
+          <LogoMark className="pub-logo" aria-hidden="true" />
           Bosco<span>Cup</span>
         </h1>
         <button className="icon-btn" type="button" aria-label="Cambiar tema claro/oscuro" onClick={toggleTheme}>
@@ -198,7 +149,6 @@ export function PublicHome() {
             )
           }))}
         />
->>>>>>> 87ce4dfdd09f05a83adf6e4365027b8f9ee576c4
         {hasBranches && (
           <Segmented
             label="Rama"
@@ -213,25 +163,6 @@ export function PublicHome() {
         )}
       </div>
 
-<<<<<<< HEAD
-      <nav className="bottom-nav">
-        <button className={`bn ${pestana === "inicio" ? "active" : ""}`} onClick={() => irA("inicio")}>
-          <span className="bn-icon"><IconHome /></span>
-          Inicio
-        </button>
-        <button className={`bn ${pestana === "tabla" ? "active" : ""}`} onClick={() => irA("tabla")}>
-          <span className="bn-icon"><IconTable /></span>
-          Tabla
-        </button>
-        <button className={`bn ${pestana === "cruces" ? "active" : ""}`} onClick={() => irA("cruces")}>
-          <span className="bn-icon"><IconBracket /></span>
-          Cruces
-        </button>
-        <button className={`bn ${pestana === "historial" ? "active" : ""}`} onClick={() => irA("historial")}>
-          <span className="bn-icon"><IconFollow /></span>
-          Historial
-        </button>
-=======
       <main className="pub-main" key={pestana}>
         {pestana === "inicio" && (
           <>
@@ -288,7 +219,6 @@ export function PublicHome() {
             <span>{label}</span>
           </button>
         ))}
->>>>>>> 87ce4dfdd09f05a83adf6e4365027b8f9ee576c4
       </nav>
 
       <TeamSheet target={equipo} onClose={() => setEquipo(null)} />

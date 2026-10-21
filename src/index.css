@@ -146,59 +146,7 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
-<<<<<<< HEAD
-/* ---- app shell: full-bleed on a real phone, framed preview on anything wider ---- */
-.shell {
-  width: 100%;
-  max-width: 440px;
-  margin: 0 auto;
-  min-height: 100vh;
-  min-height: 100dvh;
-  background: var(--color-bg);
-  display: flex;
-  flex-direction: column;
-}
-.shell::before {
-  content: "";
-  flex: none;
-  display: block;
-  height: 4px;
-  background: linear-gradient(90deg, var(--color-futbol), var(--color-voley), var(--color-basquet));
-}
-@media (min-width: 441px) {
-  body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 16px;
-  }
-  .shell {
-    height: min(844px, 92vh);
-    min-height: 0;
-    border-radius: 34px;
-    border: 1px solid var(--color-line);
-    box-shadow: 0 30px 60px -24px rgba(10, 10, 20, 0.35);
-    overflow: hidden;
-  }
-}
-
-.ph-head {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 16px 16px 12px;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-futbol) 10%, transparent),
-    color-mix(in srgb, var(--color-brand) 9%, transparent) 60%,
-    transparent
-  );
-}
-=======
 /* Logo compartido (admin, veedor). */
->>>>>>> 87ce4dfdd09f05a83adf6e4365027b8f9ee576c4
 .wordmark {
   display: flex;
   align-items: center;
@@ -210,17 +158,11 @@ button {
   letter-spacing: -0.01em;
   flex: none;
 }
-<<<<<<< HEAD
-.wordmark .logo-mark {
-  width: 21px;
-  height: 24px;
-=======
 .wordmark .ball {
   width: 18px;
   height: 18px;
   border-radius: 50%;
   background: conic-gradient(var(--color-futbol) 0 120deg, var(--color-voley) 120deg 240deg, var(--color-basquet) 240deg 360deg);
->>>>>>> 87ce4dfdd09f05a83adf6e4365027b8f9ee576c4
   flex: none;
 }
 .cup {
@@ -254,6 +196,13 @@ button {
 }
 .pub-title span {
   color: var(--color-text-muted);
+}
+.pub-logo {
+  width: 26px;
+  height: 30px;
+  margin-right: 8px;
+  vertical-align: -6px;
+  flex: none;
 }
 .icon-btn {
   width: 40px;
@@ -630,16 +579,6 @@ button {
   align-items: center;
   gap: 8px;
 }
-<<<<<<< HEAD
-.live-count {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: color-mix(in srgb, var(--color-live) 16%, var(--color-surface-2));
-  color: var(--color-live);
-  padding: 7px 10px;
-  border-radius: 999px;
-=======
 .section-head.bare {
   padding: 0 4px;
 }
@@ -667,7 +606,6 @@ button {
 }
 .zone-name {
   font-family: var(--font-mono);
->>>>>>> 87ce4dfdd09f05a83adf6e4365027b8f9ee576c4
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -733,134 +671,6 @@ button {
   background: var(--color-live);
   animation: ping 1.8s var(--ease) infinite;
 }
-<<<<<<< HEAD
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(0.75);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .live-count .dot {
-    animation: none;
-  }
-}
-.theme-btn {
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  border-radius: 50%;
-  border: none;
-  background: var(--color-surface-2);
-  color: var(--color-text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.theme-btn svg {
-  width: 16px;
-  height: 16px;
-}
-.theme-btn[aria-pressed="true"] {
-  background: var(--color-brand);
-  color: var(--color-brand-contrast);
-}
-
-.scroll {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.sport-tabs {
-  display: flex;
-  gap: 6px;
-  padding: 2px 16px 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.sport-tabs::-webkit-scrollbar {
-  display: none;
-}
-.sport-tab {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 15px;
-  border-radius: 999px;
-  border: none;
-  font-weight: 800;
-  font-size: 13px;
-  background: var(--color-surface-2);
-  color: var(--color-text-muted);
-  white-space: nowrap;
-  min-height: 40px;
-}
-.sport-tab svg {
-  width: 17px;
-  height: 17px;
-}
-.sport-tab.futbol {
-  background: color-mix(in srgb, var(--color-futbol) 16%, var(--color-surface-2));
-  color: var(--color-futbol);
-}
-.sport-tab.voley {
-  background: color-mix(in srgb, var(--color-voley) 16%, var(--color-surface-2));
-  color: var(--color-voley);
-}
-.sport-tab.basquet {
-  background: color-mix(in srgb, var(--color-basquet) 16%, var(--color-surface-2));
-  color: var(--color-basquet);
-}
-.sport-tab.active {
-  color: #06210f;
-  transform: rotate(-1deg);
-}
-.sport-tab.active.futbol {
-  background: var(--color-futbol);
-}
-.sport-tab.active.voley {
-  background: var(--color-voley);
-}
-.sport-tab.active.basquet {
-  background: var(--color-basquet);
-  color: #2a1200;
-}
-
-.branch-toggle {
-  display: flex;
-  gap: 6px;
-  padding: 0 16px 14px;
-}
-.branch-toggle button {
-  flex: 1;
-  min-height: 38px;
-  padding: 8px;
-  border: 2px solid var(--color-line);
-  background: transparent;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-.branch-toggle button.active {
-  border-color: var(--active-branch-color, var(--color-futbol));
-  color: var(--active-branch-color, var(--color-futbol));
-  background: color-mix(in srgb, var(--active-branch-color, var(--color-futbol)) 12%, transparent);
-}
-
-=======
->>>>>>> 87ce4dfdd09f05a83adf6e4365027b8f9ee576c4
 .live-rail {
   display: flex;
   gap: 10px;
@@ -884,23 +694,7 @@ button {
   box-shadow: var(--shadow-card);
   padding: 14px 16px;
   position: relative;
-<<<<<<< HEAD
-  box-shadow: inset 4px 0 0 0 var(--color-line);
-}
-.live-card.futbol {
-  background: color-mix(in srgb, var(--color-futbol) 9%, var(--color-surface-2));
-  box-shadow: inset 4px 0 0 0 var(--color-futbol);
-}
-.live-card.voley {
-  background: color-mix(in srgb, var(--color-voley) 9%, var(--color-surface-2));
-  box-shadow: inset 4px 0 0 0 var(--color-voley);
-}
-.live-card.basquet {
-  background: color-mix(in srgb, var(--color-basquet) 9%, var(--color-surface-2));
-  box-shadow: inset 4px 0 0 0 var(--color-basquet);
-=======
   overflow: hidden;
->>>>>>> 87ce4dfdd09f05a83adf6e4365027b8f9ee576c4
 }
 .live-card::before {
   content: "";
@@ -1184,27 +978,11 @@ i.tcard.r {
   height: 19px;
   transition: transform 0.4s var(--spring);
 }
-<<<<<<< HEAD
-.bottom-nav .bn-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 22px;
-  border-radius: 999px;
-}
-.bottom-nav .bn.active {
-  color: var(--color-brand);
-=======
 .tabbar button.active {
   color: var(--color-island-text);
 }
 .tabbar button.active svg {
   transform: translateY(-1px) scale(1.08);
->>>>>>> 87ce4dfdd09f05a83adf6e4365027b8f9ee576c4
-}
-.bottom-nav .bn.active .bn-icon {
-  background: color-mix(in srgb, var(--color-brand) 16%, transparent);
 }
 
 .role-footer {
@@ -1681,14 +1459,13 @@ i.tcard.r {
   .pub-head {
     padding: 30px 0 20px;
   }
-<<<<<<< HEAD
-  .wordmark .logo-mark {
-    width: 27px;
-    height: 31px;
-=======
   .pub-title {
     font-size: 44px;
->>>>>>> 87ce4dfdd09f05a83adf6e4365027b8f9ee576c4
+  }
+  .pub-logo {
+    width: 34px;
+    height: 39px;
+    vertical-align: -8px;
   }
   .pub-controls {
     flex-direction: row;
