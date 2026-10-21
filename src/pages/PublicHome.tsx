@@ -16,6 +16,7 @@ import {
   IconSun,
   IconTable,
   IconVoley,
+  LogoMark,
   Shield
 } from "@/components/icons";
 
@@ -96,7 +97,7 @@ export function PublicHome() {
     <div className="shell">
       <header className="ph-head">
         <div className="wordmark">
-          <span className="ball" />
+          <LogoMark className="logo-mark" aria-hidden="true" />
           Bosco<span className="cup">Cup</span>
         </div>
         <div className="head-right">
@@ -132,7 +133,7 @@ export function PublicHome() {
           {SPORTS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              className={`sport-tab ${sport === id ? `active ${id}` : ""}`}
+              className={`sport-tab ${id} ${sport === id ? "active" : ""}`}
               onClick={() => setSport(id)}
             >
               <Icon />
@@ -312,19 +313,19 @@ export function PublicHome() {
 
       <nav className="bottom-nav">
         <button className={`bn ${pestana === "inicio" ? "active" : ""}`} onClick={() => irA("inicio")}>
-          <IconHome />
+          <span className="bn-icon"><IconHome /></span>
           Inicio
         </button>
         <button className={`bn ${pestana === "tabla" ? "active" : ""}`} onClick={() => irA("tabla")}>
-          <IconTable />
+          <span className="bn-icon"><IconTable /></span>
           Tabla
         </button>
         <button className={`bn ${pestana === "cruces" ? "active" : ""}`} onClick={() => irA("cruces")}>
-          <IconBracket />
+          <span className="bn-icon"><IconBracket /></span>
           Cruces
         </button>
         <button className={`bn ${pestana === "historial" ? "active" : ""}`} onClick={() => irA("historial")}>
-          <IconFollow />
+          <span className="bn-icon"><IconFollow /></span>
           Historial
         </button>
       </nav>

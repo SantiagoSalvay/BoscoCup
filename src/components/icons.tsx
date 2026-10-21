@@ -203,6 +203,29 @@ export function IconGoalOwn(props: IconProps) {
   );
 }
 
+export function LogoMark(props: IconProps) {
+  const shieldPath = "M23 1 44 7v18C44 39 35 48 23 51 11 48 2 39 2 25V7z";
+  return (
+    <svg viewBox="0 0 46 52" {...props}>
+      <defs>
+        <clipPath id="bosco-logo-clip">
+          <path d={shieldPath} />
+        </clipPath>
+      </defs>
+      <g clipPath="url(#bosco-logo-clip)">
+        <rect x="0" y="0" width="46" height="18" style={{ fill: "var(--color-futbol)" }} />
+        <rect x="0" y="18" width="46" height="17" style={{ fill: "var(--color-voley)" }} />
+        <rect x="0" y="35" width="46" height="17" style={{ fill: "var(--color-basquet)" }} />
+      </g>
+      <path d={shieldPath} fill="none" style={{ stroke: "var(--color-bg)" }} strokeWidth="2.2" />
+      <path
+        d="M23 14.5l3.3 6.8 7.4.9-5.4 5.1 1.4 7.3L23 31l-6.7 3.6 1.4-7.3-5.4-5.1 7.4-.9z"
+        style={{ fill: "var(--color-win)" }}
+      />
+    </svg>
+  );
+}
+
 export function Shield({ fill, ...rest }: IconProps & { fill: string }) {
   return (
     <svg viewBox="0 0 46 52" {...rest}>

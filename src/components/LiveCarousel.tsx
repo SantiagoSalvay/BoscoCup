@@ -41,7 +41,7 @@ export function LiveCarousel({ matches }: { matches: LiveMatch[] }) {
           const Icon = SPORT_ICON[m.sport];
           return (
             <div className="carousel-slide" style={{ width: `${100 / n}%` }} key={m.id}>
-              <div className="live-card">
+              <div className={`live-card ${m.sport}`}>
                 <span className="sticker">{m.statusLabel}</span>
                 <div className="carousel-sport">
                   <Icon />

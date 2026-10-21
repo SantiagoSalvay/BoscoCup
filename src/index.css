@@ -125,6 +125,13 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
 }
+.shell::before {
+  content: "";
+  flex: none;
+  display: block;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-futbol), var(--color-voley), var(--color-basquet));
+}
 @media (min-width: 441px) {
   body {
     display: flex;
@@ -149,6 +156,12 @@ button:focus-visible {
   justify-content: space-between;
   gap: 10px;
   padding: 16px 16px 12px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-futbol) 10%, transparent),
+    color-mix(in srgb, var(--color-brand) 9%, transparent) 60%,
+    transparent
+  );
 }
 .wordmark {
   display: flex;
@@ -159,15 +172,9 @@ button:focus-visible {
   font-size: 19px;
   flex: none;
 }
-.wordmark .ball {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: conic-gradient(
-    var(--color-futbol) 0 120deg,
-    var(--color-voley) 120deg 240deg,
-    var(--color-basquet) 240deg 360deg
-  );
+.wordmark .logo-mark {
+  width: 21px;
+  height: 24px;
   flex: none;
 }
 .cup {
@@ -182,7 +189,8 @@ button:focus-visible {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--color-surface-2);
+  background: color-mix(in srgb, var(--color-live) 16%, var(--color-surface-2));
+  color: var(--color-live);
   padding: 7px 10px;
   border-radius: 999px;
   font-size: 11px;
@@ -272,6 +280,18 @@ button:focus-visible {
   width: 17px;
   height: 17px;
 }
+.sport-tab.futbol {
+  background: color-mix(in srgb, var(--color-futbol) 16%, var(--color-surface-2));
+  color: var(--color-futbol);
+}
+.sport-tab.voley {
+  background: color-mix(in srgb, var(--color-voley) 16%, var(--color-surface-2));
+  color: var(--color-voley);
+}
+.sport-tab.basquet {
+  background: color-mix(in srgb, var(--color-basquet) 16%, var(--color-surface-2));
+  color: var(--color-basquet);
+}
 .sport-tab.active {
   color: #06210f;
   transform: rotate(-1deg);
@@ -329,6 +349,19 @@ button:focus-visible {
   border-radius: var(--radius-lg);
   padding: 14px 14px 15px;
   position: relative;
+  box-shadow: inset 4px 0 0 0 var(--color-line);
+}
+.live-card.futbol {
+  background: color-mix(in srgb, var(--color-futbol) 9%, var(--color-surface-2));
+  box-shadow: inset 4px 0 0 0 var(--color-futbol);
+}
+.live-card.voley {
+  background: color-mix(in srgb, var(--color-voley) 9%, var(--color-surface-2));
+  box-shadow: inset 4px 0 0 0 var(--color-voley);
+}
+.live-card.basquet {
+  background: color-mix(in srgb, var(--color-basquet) 9%, var(--color-surface-2));
+  box-shadow: inset 4px 0 0 0 var(--color-basquet);
 }
 .sticker {
   position: absolute;
@@ -612,8 +645,19 @@ table.standings tr.win td {
   width: 19px;
   height: 19px;
 }
+.bottom-nav .bn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 22px;
+  border-radius: 999px;
+}
 .bottom-nav .bn.active {
   color: var(--color-brand);
+}
+.bottom-nav .bn.active .bn-icon {
+  background: color-mix(in srgb, var(--color-brand) 16%, transparent);
 }
 
 .panels {
@@ -645,9 +689,9 @@ table.standings tr.win td {
   .wordmark {
     font-size: 24px;
   }
-  .wordmark .ball {
-    width: 26px;
-    height: 26px;
+  .wordmark .logo-mark {
+    width: 27px;
+    height: 31px;
   }
   .live-count {
     font-size: 12.5px;
