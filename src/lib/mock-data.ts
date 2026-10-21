@@ -1,4 +1,5 @@
 import type { BracketMatch, Branch, HistorialMatch, LiveMatch, Sport, StandingRow, Team, ZoneStandings } from "@/types";
+import type { ResultadoLetra, TeamDetail, TeamMatch } from "@/lib/team-detail";
 
 /**
  * Datos de ejemplo para que la app se vea completa sin depender de Supabase.
@@ -19,7 +20,31 @@ const T = {
 };
 
 function row(team: Team, played: number, goalDiff: number, points: number, qualifies: boolean, amarillas = 0, rojas = 0): StandingRow {
-  return { team, played, goalDiff, points, amarillas, rojas, qualifies, empatado: false };
+  // Desglose aproximado a partir de los puntos (3/1/0), suficiente para la demo.
+  const won = Math.min(played, Math.floor(points / 3));
+  const drawn = Math.min(played - won, points - won * 3);
+  const lost = played - won - drawn;
+  const goalsFor = Math.max(goalDiff, 0) + played;
+  return {
+    team,
+    position: 0,
+    played,
+    won,
+    drawn,
+    lost,
+    goalsFor,
+    goalsAgainst: goalsFor - goalDiff,
+    goalDiff,
+    points,
+    amarillas,
+    rojas,
+    qualifies,
+    empatado: false
+  };
+}
+
+function zone(id: string, nombre: string, rows: StandingRow[]): ZoneStandings {
+  return { id, nombre, completa: false, rows: rows.map((r, i) => ({ ...r, position: i + 1 })) };
 }
 
 function bracket(
@@ -74,16 +99,8 @@ const futbolMasc: SportData = {
     }
   ],
   zones: [
-    {
-      id: "zona-a",
-      nombre: "Zona A",
-      rows: [row(T.sanMartin, 3, 6, 9, true), row(T.belgrano, 3, 3, 7, true), row(T.sarmiento, 3, -1, 3, false)]
-    },
-    {
-      id: "zona-b",
-      nombre: "Zona B",
-      rows: [row(T.mitre, 3, -2, 3, false), row(T.moreno, 3, -4, 1, false), row(T.guemes, 3, -2, 0, false)]
-    }
+    zone("zona-a", "Zona A", [row(T.sanMartin, 3, 6, 9, true), row(T.belgrano, 3, 3, 7, true), row(T.sarmiento, 3, -1, 3, false)]),
+    zone("zona-b", "Zona B", [row(T.mitre, 3, -2, 3, false), row(T.moreno, 3, -4, 1, false), row(T.guemes, 3, -2, 0, false)])
   ],
   bracket: [
     bracket("Semifinal", T.sanMartin, T.mitre, { homeScore: 2, awayScore: 1, winnerId: T.sanMartin.id, pending: false }),
@@ -112,11 +129,7 @@ const futbolFem: SportData = {
     }
   ],
   zones: [
-    {
-      id: "unica",
-      nombre: "",
-      rows: [row(T.belgrano, 2, 3, 6, true), row(T.alberdi, 2, 1, 4, true), row(T.rivadavia, 2, -1, 1, false), row(T.sarmiento, 2, -3, 0, false)]
-    }
+    zone("unica", "", [row(T.belgrano, 2, 3, 6, true), row(T.alberdi, 2, 1, 4, true), row(T.rivadavia, 2, -1, 1, false), row(T.sarmiento, 2, -3, 0, false)])
   ],
   bracket: [bracket("Final", T.belgrano, T.alberdi, { homeScore: null, awayScore: null, winnerId: null, pending: true, scheduledTime: "17:30" })],
   historial: [hist("h-ff-1", T.belgrano, T.sarmiento, 3, 1, "Fase de grupos", "18/10")]
@@ -138,11 +151,7 @@ const voleyMasc: SportData = {
     }
   ],
   zones: [
-    {
-      id: "unica",
-      nombre: "",
-      rows: [row(T.mitre, 3, 4, 8, true), row(T.guemes, 3, 1, 6, true), row(T.moreno, 3, -2, 3, false), row(T.sanMartin, 3, -3, 2, false)]
-    }
+    zone("unica", "", [row(T.mitre, 3, 4, 8, true), row(T.guemes, 3, 1, 6, true), row(T.moreno, 3, -2, 3, false), row(T.sanMartin, 3, -3, 2, false)])
   ],
   bracket: [bracket("Final", T.mitre, T.guemes, { homeScore: null, awayScore: null, winnerId: null, pending: true, scheduledTime: "16:45" })],
   historial: [hist("h-vm-1", T.mitre, T.moreno, 3, 1, "Fase de grupos", "18/10")]
@@ -164,11 +173,7 @@ const voleyFem: SportData = {
     }
   ],
   zones: [
-    {
-      id: "unica",
-      nombre: "",
-      rows: [row(T.sanMartin, 3, 5, 9, true), row(T.belgrano, 3, 2, 6, true), row(T.moreno, 3, -3, 2, false), row(T.alberdi, 3, -4, 1, false)]
-    }
+    zone("unica", "", [row(T.sanMartin, 3, 5, 9, true), row(T.belgrano, 3, 2, 6, true), row(T.moreno, 3, -3, 2, false), row(T.alberdi, 3, -4, 1, false)])
   ],
   bracket: [bracket("Final", T.sanMartin, T.belgrano, { homeScore: null, awayScore: null, winnerId: null, pending: true, scheduledTime: "17:00" })],
   historial: [hist("h-vf-1", T.sanMartin, T.alberdi, 3, 2, "Fase de grupos", "18/10")]
@@ -190,11 +195,7 @@ const basquet: SportData = {
     }
   ],
   zones: [
-    {
-      id: "unica",
-      nombre: "",
-      rows: [row(T.mitre, 3, 12, 3, true), row(T.belgrano, 3, 4, 2, true), row(T.guemes, 3, -6, 1, false), row(T.sarmiento, 3, -10, 0, false)]
-    }
+    zone("unica", "", [row(T.mitre, 3, 12, 3, true), row(T.belgrano, 3, 4, 2, true), row(T.guemes, 3, -6, 1, false), row(T.sarmiento, 3, -10, 0, false)])
   ],
   bracket: [bracket("Final", T.mitre, T.belgrano, { homeScore: null, awayScore: null, winnerId: null, pending: true, scheduledTime: "19:00" })],
   historial: [hist("h-b-1", T.mitre, T.sarmiento, 52, 40, "Fase de grupos", "18/10")]
@@ -218,4 +219,48 @@ export function getMockAllLiveMatches(): LiveMatch[] {
 
 export function getMockLiveCount(): number {
   return getMockAllLiveMatches().length;
+}
+
+/** Ficha de equipo armada con la tabla e historial de ejemplo (sin plantel). */
+export function getMockTeamDetail(teamId: string, sport: Sport, branch: Branch): TeamDetail | null {
+  const data = getMockData(sport, branch);
+  const zona = data.zones.find((z) => z.rows.some((r) => r.team.id === teamId));
+  const standing = zona?.rows.find((r) => r.team.id === teamId);
+  if (!zona || !standing) return null;
+
+  const matches: TeamMatch[] = data.historial
+    .filter((m) => m.home.id === teamId || m.away.id === teamId)
+    .map((m) => {
+      const isHome = m.home.id === teamId;
+      const gf = isHome ? m.homeScore : m.awayScore;
+      const ga = isHome ? m.awayScore : m.homeScore;
+      const result: ResultadoLetra = gf === ga ? "E" : gf > ga ? "G" : "P";
+      return {
+        id: m.id,
+        rival: isHome ? m.away : m.home,
+        isHome,
+        goalsFor: gf,
+        goalsAgainst: ga,
+        penalesFor: null,
+        penalesAgainst: null,
+        status: "finalizado",
+        result,
+        roundLabel: m.roundLabel,
+        when: m.date,
+        court: ""
+      };
+    });
+
+  const label = { futbol: "Fútbol", voley: "Vóley", basquet: "Básquet" }[sport];
+  return {
+    team: standing.team,
+    sport,
+    categoriaLabel: sport === "basquet" ? label : `${label} ${branch === "masculino" ? "Masculino" : "Femenino"}`,
+    zoneName: zona.nombre,
+    zoneSize: zona.rows.length,
+    standing,
+    players: [],
+    matches,
+    form: matches.map((m) => m.result as ResultadoLetra).slice(0, 5)
+  };
 }
