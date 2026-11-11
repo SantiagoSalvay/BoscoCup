@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import type { CanchaRow, DeporteDb } from "@/lib/db-types";
 
 const TORNEO_ID = "00000000-0000-0000-0000-000000000001";
-const DEPORTES: DeporteDb[] = ["futbol", "voley", "basquet"];
+const DEPORTES: DeporteDb[] = ["futbol", "voley"];
 
 export function AdminCanchas() {
   const [canchas, setCanchas] = useState<CanchaRow[]>([]);

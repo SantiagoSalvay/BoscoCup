@@ -2,42 +2,48 @@
 @import "tailwindcss";
 
 /* ============================================================================
-   Tokens — gris frío, superficies blancas, islas negras.
+   Tokens — paleta del logo: azul marino profundo + rojo, sobre blancos fríos.
    ============================================================================ */
 :root {
   --font-display: "Bricolage Grotesque", "Geist", system-ui, sans-serif;
   --font-body: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
 
-  --color-bg: #ffffff;
-  --color-page: #eef0f3;
-  --color-surface: #ffffff;
-  --color-surface-2: #f4f5f7;
-  --color-line: #e4e7ec;
-  --color-text: #0d0f14;
-  --color-text-muted: #697080;
+  --navy: #0f2147;
+  --navy-2: #1b3367;
+  --red: #e3262e;
 
-  --color-island: #0d0f14;
-  --color-island-2: #1d2029;
-  --color-island-text: #f4f5f7;
-  --color-island-muted: #8b919e;
+  --color-bg: #ffffff;
+  --color-page: #eef1f7;
+  --color-surface: #ffffff;
+  --color-surface-2: #f2f4f9;
+  --color-line: #dfe4ee;
+  --color-text: #0b1a36;
+  --color-text-muted: #5f6b82;
+
+  --color-island: var(--navy);
+  --color-island-2: var(--navy-2);
+  --color-island-text: #f4f6fb;
+  --color-island-muted: #98a6c4;
   --color-island-line: transparent;
 
-  --color-brand: #2f55ff;
+  --color-brand: var(--red);
   --color-brand-contrast: #ffffff;
-  --color-live: #ff2d55;
+  --color-strong: var(--navy);
+  --color-strong-contrast: #ffffff;
+  --color-live: var(--red);
   --color-live-contrast: #ffffff;
   --color-win: #f5b700;
-  --color-win-contrast: #0d0f14;
+  --color-win-contrast: #0b1a36;
+  --color-ok: #12a150;
 
-  --color-futbol: #12a150;
-  --color-voley: #0ea5c6;
-  --color-basquet: #f26b1d;
+  --color-futbol: var(--navy);
+  --color-voley: var(--red);
   --color-card-yellow: #f4c430;
-  --color-card-red: #ef3b3b;
+  --color-card-red: #e3262e;
 
-  --shadow-card: 0 1px 2px rgba(13, 15, 20, 0.04), 0 8px 24px -12px rgba(13, 15, 20, 0.12);
-  --shadow-island: 0 12px 32px -10px rgba(13, 15, 20, 0.45), 0 2px 6px rgba(13, 15, 20, 0.18);
+  --shadow-card: 0 1px 2px rgba(15, 33, 71, 0.05), 0 8px 24px -12px rgba(15, 33, 71, 0.16);
+  --shadow-island: 0 12px 32px -10px rgba(15, 33, 71, 0.5), 0 2px 6px rgba(15, 33, 71, 0.2);
 
   --radius-xl: 28px;
   --radius-lg: 20px;
@@ -50,59 +56,63 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-bg: #121419;
-    --color-page: #07080a;
-    --color-surface: #121419;
-    --color-surface-2: #1a1d24;
-    --color-line: #242833;
-    --color-text: #f2f3f5;
-    --color-text-muted: #8d94a3;
+    --color-bg: #0c1730;
+    --color-page: #050b19;
+    --color-surface: #0c1730;
+    --color-surface-2: #13213f;
+    --color-line: #1e2e52;
+    --color-text: #f1f4fa;
+    --color-text-muted: #8c9ab8;
 
-    --color-island: #000000;
-    --color-island-2: #1a1d24;
-    --color-island-line: #262a33;
+    --color-island: #0f2147;
+    --color-island-2: #1b3367;
+    --color-island-line: #24407a;
 
-    --color-brand: #7b93ff;
-    --color-brand-contrast: #07080a;
-    --color-live: #ff4d6d;
-    --color-live-contrast: #1a0510;
+    --color-brand: #ff4b52;
+    --color-brand-contrast: #ffffff;
+    --color-strong: #f1f4fa;
+    --color-strong-contrast: #050b19;
+    --color-live: #ff4b52;
+    --color-live-contrast: #ffffff;
     --color-win: #ffcc33;
+    --color-ok: #2fca72;
 
-    --color-futbol: #2fca72;
-    --color-voley: #33c4e3;
-    --color-basquet: #ff8a45;
-    --color-card-red: #ff5f57;
+    --color-futbol: #3f6fd6;
+    --color-voley: #ff4b52;
+    --color-card-red: #ff4b52;
 
-    --shadow-card: 0 0 0 1px #1c1f27;
+    --shadow-card: 0 0 0 1px #16264a;
     --shadow-island: 0 12px 32px -10px rgba(0, 0, 0, 0.8);
   }
 }
 
 :root[data-theme="dark"] {
-  --color-bg: #121419;
-  --color-page: #07080a;
-  --color-surface: #121419;
-  --color-surface-2: #1a1d24;
-  --color-line: #242833;
-  --color-text: #f2f3f5;
-  --color-text-muted: #8d94a3;
+  --color-bg: #0c1730;
+  --color-page: #050b19;
+  --color-surface: #0c1730;
+  --color-surface-2: #13213f;
+  --color-line: #1e2e52;
+  --color-text: #f1f4fa;
+  --color-text-muted: #8c9ab8;
 
-  --color-island: #000000;
-  --color-island-2: #1a1d24;
-  --color-island-line: #262a33;
+  --color-island: #0f2147;
+  --color-island-2: #1b3367;
+  --color-island-line: #24407a;
 
-  --color-brand: #7b93ff;
-  --color-brand-contrast: #07080a;
-  --color-live: #ff4d6d;
-  --color-live-contrast: #1a0510;
+  --color-brand: #ff4b52;
+  --color-brand-contrast: #ffffff;
+  --color-strong: #f1f4fa;
+  --color-strong-contrast: #050b19;
+  --color-live: #ff4b52;
+  --color-live-contrast: #ffffff;
   --color-win: #ffcc33;
+  --color-ok: #2fca72;
 
-  --color-futbol: #2fca72;
-  --color-voley: #33c4e3;
-  --color-basquet: #ff8a45;
-  --color-card-red: #ff5f57;
+  --color-futbol: #3f6fd6;
+  --color-voley: #ff4b52;
+  --color-card-red: #ff4b52;
 
-  --shadow-card: 0 0 0 1px #1c1f27;
+  --shadow-card: 0 0 0 1px #16264a;
   --shadow-island: 0 12px 32px -10px rgba(0, 0, 0, 0.8);
 }
 
@@ -159,11 +169,18 @@ button {
   flex: none;
 }
 .wordmark .ball {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: conic-gradient(var(--color-futbol) 0 120deg, var(--color-voley) 120deg 240deg, var(--color-basquet) 240deg 360deg);
+  width: 22px;
+  height: 36px;
+  background: url("/logo-bosco-cup.png") center / contain no-repeat;
   flex: none;
+}
+:root[data-theme="dark"] .wordmark .ball {
+  background-image: url("/logo-bosco-cup-dark.png");
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .wordmark .ball {
+    background-image: url("/logo-bosco-cup-dark.png");
+  }
 }
 .cup {
   color: var(--color-text-muted);
@@ -195,14 +212,161 @@ button {
   letter-spacing: -0.02em;
 }
 .pub-title span {
+  color: var(--color-brand);
+}
+
+/* ---- cabecera con logos ---- */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.brand-logo {
+  height: 64px;
+  width: auto;
+  flex: none;
+  filter: drop-shadow(0 6px 14px rgba(15, 33, 71, 0.18));
+}
+.brand-sub {
+  margin: 5px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--color-text-muted);
 }
-.pub-logo {
-  width: 26px;
-  height: 30px;
-  margin-right: 8px;
-  vertical-align: -6px;
+.brand-sub::before {
+  content: "";
+  width: 14px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-brand);
+}
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex: none;
+}
+.org-btn {
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card), inset 0 0 0 1.5px color-mix(in srgb, var(--color-brand) 35%, transparent);
+  color: var(--color-text);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  transition: transform 0.3s var(--spring), box-shadow 0.2s;
+}
+.org-btn:hover {
+  transform: translateY(-1px);
+}
+.org-btn:active {
+  transform: scale(0.94);
+}
+.org-btn img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  padding: 4px;
+}
+.org-btn svg {
+  width: 19px;
+  height: 19px;
+}
+
+/* ---- hoja de acceso (organizador / veedor) ---- */
+.access-sheet .sheet-title {
+  margin-bottom: 6px;
+}
+.access-intro {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  color: var(--color-text-muted);
+}
+.access-option {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  text-decoration: none;
+  transition: transform 0.25s var(--spring), box-shadow 0.2s;
+}
+.access-option + .access-option {
+  margin-top: 10px;
+}
+.access-option:hover {
+  box-shadow: inset 0 0 0 1.5px var(--color-line);
+}
+.access-option:active {
+  transform: scale(0.98);
+}
+.access-option.org {
+  background: var(--color-island);
+  color: var(--color-island-text);
+}
+.access-ico {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: var(--color-brand);
+  color: #fff;
+}
+.access-option.org .access-ico {
+  background: var(--color-island-2);
+}
+.access-ico svg {
+  width: 20px;
+  height: 20px;
+}
+.access-option strong {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.access-option div span {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+.access-option.org div span {
+  color: var(--color-island-muted);
+}
+.access-arrow {
+  margin-left: auto;
+  align-self: center;
+  font-size: 18px;
+  opacity: 0.5;
+}
+
+/* Franja de marca: las dos líneas rojas del logo. */
+.brand-rule {
+  height: 4px;
+  margin: 0 2px 16px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--color-brand) 0 18%, transparent 18% 22%, var(--color-island) 22% 100%);
+  opacity: 0.9;
 }
 .icon-btn {
   width: 40px;
@@ -803,8 +967,8 @@ table.standings td.pos span {
   font-weight: 600;
 }
 table.standings tr.q td.pos span {
-  background: var(--color-text);
-  color: var(--color-surface);
+  background: var(--color-strong);
+  color: var(--color-strong-contrast);
 }
 table.standings .pts {
   font-weight: 700;
@@ -826,7 +990,7 @@ table.standings td.pts {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--color-text);
+  background: var(--color-strong);
 }
 i.tcard {
   display: inline-block;
@@ -1258,7 +1422,7 @@ i.tcard.r {
 }
 .ts-form-dot.G,
 .ts-res.G {
-  background: var(--color-futbol);
+  background: var(--color-ok);
   color: #fff;
 }
 .ts-form-dot.E,
@@ -1406,7 +1570,7 @@ i.tcard.r {
   text-align: center;
   padding: 0 6px 8px;
 }
-.ts-roster th:nth-child(2) {
+.ts-roster th:nth-child(1) {
   text-align: left;
 }
 .ts-roster td {
@@ -1415,7 +1579,7 @@ i.tcard.r {
   border-top: 1px solid var(--color-line);
   color: var(--color-text-muted);
 }
-.ts-roster td:nth-child(2) {
+.ts-roster td:nth-child(1) {
   text-align: left;
   color: var(--color-text);
   width: 100%;
@@ -1624,7 +1788,7 @@ select.input {
 .form-success {
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-futbol);
+  color: var(--color-ok);
   margin: 10px 0;
 }
 
@@ -1644,8 +1808,12 @@ select.input {
   opacity: 0.45;
 }
 .btn-primary {
-  background: var(--color-text);
-  color: var(--color-surface);
+  background: var(--color-strong);
+  color: var(--color-strong-contrast);
+}
+.btn-accent {
+  background: var(--color-brand);
+  color: var(--color-brand-contrast);
 }
 .btn-ghost {
   background: var(--color-surface-2);
@@ -1996,7 +2164,7 @@ table.data-table td {
   font-size: 11px;
   font-weight: 700;
   background: var(--color-island-2);
-  color: var(--color-futbol);
+  color: var(--color-ok);
   padding: 5px 10px;
   border-radius: 999px;
 }
@@ -2094,7 +2262,7 @@ table.data-table td {
   opacity: 0.4;
 }
 .v-btn.gol {
-  background: var(--color-futbol);
+  background: var(--color-ok);
 }
 .v-btn.amarilla {
   background: var(--color-card-yellow);
@@ -2258,9 +2426,9 @@ table.data-table td {
   gap: 8px;
 }
 .lineup-chip.active {
-  border-color: var(--color-futbol);
-  color: var(--color-futbol);
-  background: color-mix(in srgb, var(--color-futbol) 12%, transparent);
+  border-color: var(--color-ok);
+  color: var(--color-ok);
+  background: color-mix(in srgb, var(--color-ok) 12%, transparent);
 }
 
 @media (max-width: 760px) {
@@ -2288,4 +2456,140 @@ table.data-table td {
   .topbar {
     padding: 14px;
   }
+}
+
+/* ---- veedor: acciones de fútbol ---- */
+.v-grid.v-grid-main {
+  grid-template-columns: repeat(3, 1fr);
+}
+.v-grid-main .v-btn {
+  min-height: 112px;
+  font-size: 15px;
+}
+.v-grid-main .v-btn svg {
+  width: 30px;
+  height: 30px;
+}
+.v-extra {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 14px;
+}
+.v-extra button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  font-size: 13px;
+  font-weight: 600;
+}
+.v-extra button svg {
+  width: 16px;
+  height: 16px;
+}
+.v-extra button:disabled {
+  opacity: 0.4;
+}
+.sheet-option-note {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--color-card-red);
+}
+
+/* ---- veedor: vóley ---- */
+.vy-court {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 16px;
+}
+.vy-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.vy-point {
+  border: none;
+  border-radius: var(--radius-xl);
+  min-height: 200px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s var(--spring);
+}
+.vy-point:active {
+  transform: scale(0.97);
+}
+.vy-point:disabled {
+  opacity: 0.45;
+}
+.vy-num {
+  font-family: var(--font-display);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: 72px;
+  line-height: 1;
+}
+.vy-label {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0 8px;
+  text-align: center;
+}
+
+/* ---- admin: fixture ---- */
+.fixture-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-left: 4px solid var(--color-brand);
+}
+.manual-match summary {
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+.manual-match[open] summary {
+  margin-bottom: 14px;
+}
+
+/* ---- login ---- */
+.login-card {
+  border-top: 4px solid var(--color-brand);
+}
+.login-logo {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 14px;
+}
+.login-logo img {
+  height: 96px;
+  width: auto;
+}
+.login-card .login-title {
+  text-align: center;
+}
+.back-link {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+.back-link:hover {
+  color: var(--color-brand);
 }

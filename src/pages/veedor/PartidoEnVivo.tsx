@@ -5,16 +5,7 @@ import { cancelQueuedInsert, insertWithFallback, isQueued, updateWithFallback } 
 import { useSyncStatus } from "@/lib/use-sync-status";
 import { useMatchClock } from "@/lib/use-match-clock";
 import type { EquipoRow, EventoPartidoRow, EventoTipo, JugadorRow, PartidoEstado } from "@/lib/db-types";
-import {
-  IconCard,
-  IconGol,
-  IconGoalOwn,
-  IconIncidencia,
-  IconPenal,
-  IconSub,
-  IconSync,
-  IconUndo
-} from "@/components/icons";
+import { IconCard, IconGol, IconGoalOwn, IconIncidencia, IconSync, IconUndo } from "@/components/icons";
 
 interface Props {
   partidoId: string;
@@ -22,32 +13,42 @@ interface Props {
   equipoVisitante: EquipoRow;
   jugadoresLocal: JugadorRow[];
   jugadoresVisitante: JugadorRow[];
-  titularesLocal: Set<string>;
-  titularesVisitante: Set<string>;
   estadoInicial: PartidoEstado;
   esEliminatoria: boolean;
 }
 
-type Step = "equipo" | "jugador" | "asistencia" | "sale" | "entra" | "texto";
+type Step = "equipo" | "jugador" | "texto";
 
 interface SheetState {
   tipo: EventoTipo;
   step: Step;
   equipoId?: string;
-  jugadorId?: string;
-  saleId?: string;
 }
 
+/** Lo que cobra el veedor en fútbol: goles, amarillas y rojas. */
 const ACCIONES: { tipo: EventoTipo; label: string; icon: typeof IconGol; className: string }[] = [
   { tipo: "gol", label: "Gol", icon: IconGol, className: "gol" },
   { tipo: "tarjeta_amarilla", label: "Amarilla", icon: IconCard, className: "amarilla" },
-  { tipo: "tarjeta_roja", label: "Roja", icon: IconCard, className: "roja" },
-  { tipo: "cambio", label: "Cambio", icon: IconSub, className: "cambio" },
-  { tipo: "penal_convertido", label: "Penal convertido", icon: IconPenal, className: "penal" },
-  { tipo: "penal_errado", label: "Penal errado", icon: IconPenal, className: "incidencia" },
-  { tipo: "gol_en_contra", label: "Gol en contra", icon: IconGoalOwn, className: "incidencia" },
-  { tipo: "incidencia", label: "Incidencia", icon: IconIncidencia, className: "incidencia" }
+  { tipo: "tarjeta_roja", label: "Roja", icon: IconCard, className: "roja" }
 ];
+
+/** Casos menos frecuentes, en botones más chicos. */
+const ACCIONES_EXTRA: { tipo: EventoTipo; label: string; icon: typeof IconGol }[] = [
+  { tipo: "gol_en_contra", label: "Gol en contra", icon: IconGoalOwn },
+  { tipo: "incidencia", label: "Incidencia", icon: IconIncidencia }
+];
+
+const TODAS = [...ACCIONES, ...ACCIONES_EXTRA];
+
+const TIPO_TEXTO: Partial<Record<EventoTipo, string>> = {
+  gol: "Gol",
+  gol_en_contra: "Gol en contra",
+  penal_convertido: "Gol de penal",
+  tarjeta_amarilla: "Amarilla",
+  tarjeta_roja: "Roja",
+  doble_amarilla: "Doble amarilla (roja)",
+  incidencia: "Incidencia"
+};
 
 export function PartidoEnVivo({
   partidoId,
@@ -55,8 +56,6 @@ export function PartidoEnVivo({
   equipoVisitante,
   jugadoresLocal,
   jugadoresVisitante,
-  titularesLocal,
-  titularesVisitante,
   estadoInicial,
   esEliminatoria
 }: Props) {
@@ -150,20 +149,6 @@ export function PartidoEnVivo({
     return m;
   }, [eventos]);
 
-  function enCancha(equipoId: string, titulares: Set<string>): string[] {
-    const onField = new Set(titulares);
-    for (const e of eventos) {
-      if (e.anulado || e.equipo_id !== equipoId) continue;
-      if (e.tipo === "cambio") {
-        const { entra_id, sale_id } = (e.detalle ?? {}) as { entra_id?: string; sale_id?: string };
-        if (sale_id) onField.delete(sale_id);
-        if (entra_id) onField.add(entra_id);
-      }
-    }
-    for (const id of expulsados) onField.delete(id);
-    return [...onField];
-  }
-
   function jugadoresDe(equipoId: string): JugadorRow[] {
     return equipoId === equipoLocal.id ? jugadoresLocal : jugadoresVisitante;
   }
@@ -176,7 +161,7 @@ export function PartidoEnVivo({
     setSheet(null);
   }
 
-  async function confirmarEvento(payload: { equipoId: string | null; jugadorId: string | null; asistenciaId?: string | null; saleId?: string; entraId?: string; texto?: string }) {
+  async function confirmarEvento(payload: { equipoId: string | null; jugadorId: string | null; texto?: string }) {
     if (!sheet) return;
     let tipo: EventoTipo = sheet.tipo;
 
@@ -186,20 +171,15 @@ export function PartidoEnVivo({
 
     const id = crypto.randomUUID();
     const detalle: Record<string, unknown> = {};
-    if (payload.asistenciaId) detalle.asistencia_id = payload.asistenciaId;
-    if (tipo === "cambio") {
-      detalle.sale_id = payload.saleId;
-      detalle.entra_id = payload.entraId;
-    }
-    if (payload.texto) detalle.texto = payload.texto;
+    if (payload.texto) detalle.texto = payload.texto.trim().slice(0, 500);
 
     const row: EventoPartidoRow = {
       id,
       partido_id: partidoId,
       tipo,
       equipo_id: payload.equipoId,
-      jugador_id: tipo === "cambio" ? payload.entraId ?? null : payload.jugadorId,
-      jugador_asistencia_id: payload.asistenciaId ?? null,
+      jugador_id: payload.jugadorId,
+      jugador_asistencia_id: null,
       minuto: clock.minuto,
       detalle,
       anulado: false,
@@ -215,7 +195,7 @@ export function PartidoEnVivo({
       tipo,
       equipo_id: payload.equipoId,
       jugador_id: row.jugador_id,
-      jugador_asistencia_id: payload.asistenciaId ?? null,
+      jugador_asistencia_id: null,
       minuto: clock.minuto,
       detalle
     });
@@ -226,7 +206,7 @@ export function PartidoEnVivo({
     const ultimo = [...eventos].filter((e) => !e.anulado).at(-1);
     if (!ultimo) return;
     setConfirmState({
-      mensaje: `¿Deshacer "${ultimo.tipo.replace(/_/g, " ")}"?`,
+      mensaje: `¿Deshacer "${TIPO_TEXTO[ultimo.tipo] ?? ultimo.tipo.replace(/_/g, " ")}"?`,
       accion: () => aplicarDeshacer(ultimo)
     });
   }
@@ -356,9 +336,17 @@ export function PartidoEnVivo({
         </div>
       </div>
 
-      <div className="v-grid">
+      <div className="v-grid v-grid-main">
         {ACCIONES.map((a) => (
           <button key={a.tipo} className={`v-btn ${a.className}`} onClick={() => openSheet(a.tipo)} disabled={estado === "finalizado"}>
+            <a.icon />
+            {a.label}
+          </button>
+        ))}
+      </div>
+      <div className="v-extra">
+        {ACCIONES_EXTRA.map((a) => (
+          <button key={a.tipo} type="button" onClick={() => openSheet(a.tipo)} disabled={estado === "finalizado"}>
             <a.icon />
             {a.label}
           </button>
@@ -380,7 +368,7 @@ export function PartidoEnVivo({
             <div className="tl-item" key={e.id}>
               <div className="minute tnum">{e.minuto}'</div>
               <div className="desc">
-                <b>{e.tipo.replace(/_/g, " ")}</b>
+                <b>{TIPO_TEXTO[e.tipo] ?? e.tipo.replace(/_/g, " ")}</b>
                 {e.jugador_id && ` — ${jugadorMap.get(e.jugador_id)?.nombre ?? ""}`}
                 {(e.detalle as { texto?: string })?.texto && <div className="assist">{(e.detalle as { texto?: string }).texto}</div>}
               </div>
@@ -392,15 +380,15 @@ export function PartidoEnVivo({
       {sheet && (
         <div className="sheet-overlay" onClick={closeSheet}>
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-title">{ACCIONES.find((a) => a.tipo === sheet.tipo)?.label}</div>
+            <div className="sheet-title">{TODAS.find((a) => a.tipo === sheet.tipo)?.label}</div>
 
             {sheet.step === "equipo" && (
               <div className="sheet-options">
-                <button className="sheet-option" onClick={() => setSheet({ ...sheet, equipoId: equipoLocal.id, step: sheet.tipo === "incidencia" ? "texto" : sheet.tipo === "cambio" ? "sale" : "jugador" })}>
+                <button className="sheet-option" onClick={() => setSheet({ ...sheet, equipoId: equipoLocal.id, step: sheet.tipo === "incidencia" ? "texto" : "jugador" })}>
                   <span className="color-dot" style={{ background: equipoLocal.color_primario }} />
                   {equipoLocal.nombre}
                 </button>
-                <button className="sheet-option" onClick={() => setSheet({ ...sheet, equipoId: equipoVisitante.id, step: sheet.tipo === "incidencia" ? "texto" : sheet.tipo === "cambio" ? "sale" : "jugador" })}>
+                <button className="sheet-option" onClick={() => setSheet({ ...sheet, equipoId: equipoVisitante.id, step: sheet.tipo === "incidencia" ? "texto" : "jugador" })}>
                   <span className="color-dot" style={{ background: equipoVisitante.color_primario }} />
                   {equipoVisitante.nombre}
                 </button>
@@ -414,60 +402,29 @@ export function PartidoEnVivo({
 
             {sheet.step === "jugador" && equipoSel && (
               <div className="sheet-options">
-                {jugadoresDe(equipoSel.id).map((j) => (
-                  <button
-                    key={j.id}
-                    className={`sheet-option ${expulsados.has(j.id) ? "disabled-look" : ""}`}
-                    onClick={() => {
-                      if (sheet.tipo === "gol") setSheet({ ...sheet, jugadorId: j.id, step: "asistencia" });
-                      else confirmarEvento({ equipoId: sheet.equipoId ?? null, jugadorId: j.id });
-                    }}
-                  >
-                    <span className="tnum">{j.numero ?? "—"}</span> {j.nombre}
-                    {expulsados.has(j.id) && " (expulsado)"}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {sheet.step === "asistencia" && equipoSel && (
-              <div className="sheet-options">
-                <button className="sheet-option" onClick={() => confirmarEvento({ equipoId: sheet.equipoId ?? null, jugadorId: sheet.jugadorId ?? null })}>
-                  Sin asistencia
-                </button>
-                {jugadoresDe(equipoSel.id)
-                  .filter((j) => j.id !== sheet.jugadorId)
-                  .map((j) => (
-                    <button key={j.id} className="sheet-option" onClick={() => confirmarEvento({ equipoId: sheet.equipoId ?? null, jugadorId: sheet.jugadorId ?? null, asistenciaId: j.id })}>
-                      <span className="tnum">{j.numero ?? "—"}</span> {j.nombre}
-                    </button>
-                  ))}
-              </div>
-            )}
-
-            {sheet.step === "sale" && equipoSel && (
-              <div className="sheet-options">
-                {enCancha(equipoSel.id, equipoSel.id === equipoLocal.id ? titularesLocal : titularesVisitante).map((id) => {
-                  const j = jugadorMap.get(id);
-                  if (!j) return null;
+                {sheet.tipo === "gol_en_contra" && (
+                  <p className="form-hint" style={{ margin: "0 0 4px" }}>
+                    Elegí al jugador de {equipoSel.nombre} que la metió en su arco: el gol se suma al rival.
+                  </p>
+                )}
+                {jugadoresDe(equipoSel.id).map((j) => {
+                  const amarillas = amarillasPorJugador.get(j.id) ?? 0;
+                  const afuera = expulsados.has(j.id);
                   return (
-                    <button key={id} className="sheet-option" onClick={() => setSheet({ ...sheet, saleId: id, step: "entra" })}>
-                      <span className="tnum">{j.numero ?? "—"}</span> {j.nombre}
+                    <button
+                      key={j.id}
+                      className={`sheet-option ${afuera ? "disabled-look" : ""}`}
+                      onClick={() => confirmarEvento({ equipoId: sheet.equipoId ?? null, jugadorId: j.id })}
+                    >
+                      {j.nombre}
+                      {amarillas > 0 && !afuera && <i className="tcard y" aria-label="Tiene amarilla" />}
+                      {afuera && <span className="sheet-option-note">expulsado</span>}
                     </button>
                   );
                 })}
-              </div>
-            )}
-
-            {sheet.step === "entra" && equipoSel && sheet.saleId && (
-              <div className="sheet-options">
-                {jugadoresDe(equipoSel.id)
-                  .filter((j) => !enCancha(equipoSel.id, equipoSel.id === equipoLocal.id ? titularesLocal : titularesVisitante).includes(j.id) && !expulsados.has(j.id))
-                  .map((j) => (
-                    <button key={j.id} className="sheet-option" onClick={() => confirmarEvento({ equipoId: sheet.equipoId ?? null, jugadorId: null, saleId: sheet.saleId, entraId: j.id })}>
-                      <span className="tnum">{j.numero ?? "—"}</span> {j.nombre}
-                    </button>
-                  ))}
+                <button className="sheet-option disabled-look" onClick={() => confirmarEvento({ equipoId: sheet.equipoId ?? null, jugadorId: null })}>
+                  Jugador sin identificar
+                </button>
               </div>
             )}
 

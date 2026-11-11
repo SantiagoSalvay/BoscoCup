@@ -61,7 +61,7 @@ function hist(id: string, home: Team, away: Team, homeScore: number, awayScore: 
 }
 
 export function dataKey(sport: Sport, branch: Branch): string {
-  return sport === "basquet" ? "basquet" : `${sport}:${branch}`;
+  return sport === "voley" ? "voley:mixto" : `${sport}:${branch}`;
 }
 
 interface SportData {
@@ -135,13 +135,13 @@ const futbolFem: SportData = {
   historial: [hist("h-ff-1", T.belgrano, T.sarmiento, 3, 1, "Fase de grupos", "18/10")]
 };
 
-const voleyMasc: SportData = {
+const voleyMixto: SportData = {
   live: [
     {
       id: "vm-1",
       sport: "voley",
-      branch: "masculino",
-      ramaLabel: "Vóley Masculino",
+      branch: "mixto",
+      ramaLabel: "Vóley Mixto",
       home: T.mitre,
       away: T.guemes,
       homeScore: 2,
@@ -157,56 +157,10 @@ const voleyMasc: SportData = {
   historial: [hist("h-vm-1", T.mitre, T.moreno, 3, 1, "Fase de grupos", "18/10")]
 };
 
-const voleyFem: SportData = {
-  live: [
-    {
-      id: "vf-1",
-      sport: "voley",
-      branch: "femenino",
-      ramaLabel: "Vóley Femenino",
-      home: T.sanMartin,
-      away: T.moreno,
-      homeScore: 2,
-      awayScore: 1,
-      statusLabel: "EN VIVO · SET 4",
-      court: "Cancha 4"
-    }
-  ],
-  zones: [
-    zone("unica", "", [row(T.sanMartin, 3, 5, 9, true), row(T.belgrano, 3, 2, 6, true), row(T.moreno, 3, -3, 2, false), row(T.alberdi, 3, -4, 1, false)])
-  ],
-  bracket: [bracket("Final", T.sanMartin, T.belgrano, { homeScore: null, awayScore: null, winnerId: null, pending: true, scheduledTime: "17:00" })],
-  historial: [hist("h-vf-1", T.sanMartin, T.alberdi, 3, 2, "Fase de grupos", "18/10")]
-};
-
-const basquet: SportData = {
-  live: [
-    {
-      id: "b-1",
-      sport: "basquet",
-      branch: "masculino",
-      ramaLabel: "Básquet",
-      home: T.mitre,
-      away: T.guemes,
-      homeScore: 41,
-      awayScore: 38,
-      statusLabel: "EN VIVO · C3 5:12",
-      court: "Cancha 5"
-    }
-  ],
-  zones: [
-    zone("unica", "", [row(T.mitre, 3, 12, 3, true), row(T.belgrano, 3, 4, 2, true), row(T.guemes, 3, -6, 1, false), row(T.sarmiento, 3, -10, 0, false)])
-  ],
-  bracket: [bracket("Final", T.mitre, T.belgrano, { homeScore: null, awayScore: null, winnerId: null, pending: true, scheduledTime: "19:00" })],
-  historial: [hist("h-b-1", T.mitre, T.sarmiento, 52, 40, "Fase de grupos", "18/10")]
-};
-
 const byKey: Record<string, SportData> = {
   "futbol:masculino": futbolMasc,
   "futbol:femenino": futbolFem,
-  "voley:masculino": voleyMasc,
-  "voley:femenino": voleyFem,
-  basquet
+  "voley:mixto": voleyMixto
 };
 
 export function getMockData(sport: Sport, branch: Branch): SportData {
@@ -251,11 +205,11 @@ export function getMockTeamDetail(teamId: string, sport: Sport, branch: Branch):
       };
     });
 
-  const label = { futbol: "Fútbol", voley: "Vóley", basquet: "Básquet" }[sport];
+  const label = sport === "voley" ? "Vóley" : "Fútbol";
   return {
     team: standing.team,
     sport,
-    categoriaLabel: sport === "basquet" ? label : `${label} ${branch === "masculino" ? "Masculino" : "Femenino"}`,
+    categoriaLabel: sport === "voley" ? `${label} Mixto` : `${label} ${branch === "femenino" ? "Femenino" : "Masculino"}`,
     zoneName: zona.nombre,
     zoneSize: zona.rows.length,
     standing,

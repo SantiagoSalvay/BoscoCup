@@ -1,5 +1,5 @@
 export type Rol = "admin" | "veedor";
-export type DeporteDb = "futbol" | "voley" | "basquet";
+export type DeporteDb = "futbol" | "voley";
 export type Rama = "Masculino" | "Femenino" | "Mixto" | "Único";
 export type PartidoEstado =
   | "programado"

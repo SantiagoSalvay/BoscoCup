@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase, veedorEmailFromPin } from "@/lib/supabase";
 import type { Profile } from "@/lib/db-types";
+import { chequearBloqueo, registrarExito, registrarFallo } from "@/lib/login-guard";
 
 interface AuthState {
   session: Session | null;
@@ -54,17 +55,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signInAdmin(email: string, password: string) {
     if (!supabase) throw new Error("Supabase no está configurado. Completá .env.local.");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    chequearBloqueo("admin");
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+    if (error) {
+      registrarFallo("admin");
+      // Mensaje genérico: no revelar si el email existe.
+      throw new Error("Email o contraseña incorrectos.");
+    }
+    registrarExito("admin");
   }
 
   async function signInVeedor(pin: string) {
     if (!supabase) throw new Error("Supabase no está configurado. Completá .env.local.");
+    if (!/^\d{6}$/.test(pin)) throw new Error("El PIN tiene 6 dígitos.");
+    chequearBloqueo("veedor");
     const { error } = await supabase.auth.signInWithPassword({
       email: veedorEmailFromPin(pin),
       password: pin
     });
-    if (error) throw new Error("PIN incorrecto o cuenta inactiva.");
+    if (error) {
+      registrarFallo("veedor");
+      throw new Error("PIN incorrecto o cuenta inactiva.");
+    }
+    registrarExito("veedor");
   }
 
   async function signOut() {

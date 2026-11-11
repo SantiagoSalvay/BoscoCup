@@ -1,11 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
+import { categoriaLabel } from "@/lib/labels";
 import type { Categoria, EquipoRow, JugadorRow } from "@/lib/db-types";
 
-function categoriaLabel(c: Categoria): string {
-  const deporte = c.deporte[0].toUpperCase() + c.deporte.slice(1);
-  return `${deporte} · ${c.rama}`;
-}
 
 export function AdminJugadores() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -15,9 +12,7 @@ export function AdminJugadores() {
   const [jugadores, setJugadores] = useState<JugadorRow[]>([]);
 
   const [nombre, setNombre] = useState("");
-  const [numero, setNumero] = useState("");
-  const [posicion, setPosicion] = useState("");
-  const [editando, setEditando] = useState<{ id: string; nombre: string; numero: string; posicion: string } | null>(null);
+  const [editando, setEditando] = useState<{ id: string; nombre: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,7 +44,7 @@ export function AdminJugadores() {
 
   async function loadJugadores(eqId: string) {
     if (!supabase || !eqId) return setJugadores([]);
-    const { data } = await supabase.from("jugadores").select("*").eq("equipo_id", eqId).order("numero");
+    const { data } = await supabase.from("jugadores").select("*").eq("equipo_id", eqId).order("nombre");
     setJugadores((data as JugadorRow[]) ?? []);
   }
 
@@ -63,16 +58,11 @@ export function AdminJugadores() {
     setError(null);
     if (!supabase) return setError("Supabase no está configurado.");
     if (!equipoId) return setError("Elegí un equipo primero.");
-    const { error: err } = await supabase.from("jugadores").insert({
-      equipo_id: equipoId,
-      nombre,
-      numero: numero ? Number(numero) : null,
-      posicion: posicion || null
-    });
+    const limpio = nombre.trim().replace(/\s+/g, " ");
+    if (!limpio) return setError("Escribí el nombre y apellido.");
+    const { error: err } = await supabase.from("jugadores").insert({ equipo_id: equipoId, nombre: limpio });
     if (err) return setError(err.message);
     setNombre("");
-    setNumero("");
-    setPosicion("");
     loadJugadores(equipoId);
   }
 
@@ -81,15 +71,9 @@ export function AdminJugadores() {
     setError(null);
     const { error: err } = await supabase
       .from("jugadores")
-      .update({
-        nombre: editando.nombre,
-        numero: editando.numero ? Number(editando.numero) : null,
-        posicion: editando.posicion || null
-      })
+      .update({ nombre: editando.nombre.trim().replace(/\s+/g, " ") })
       .eq("id", editando.id);
-    if (err) {
-      return setError(err.code === "23505" ? `Ya hay otro jugador con el número ${editando.numero} en este equipo.` : err.message);
-    }
+    if (err) return setError(err.message);
     setEditando(null);
     loadJugadores(equipoId);
   }
@@ -135,16 +119,16 @@ export function AdminJugadores() {
 
       <form className="panel form-row" onSubmit={onSubmit}>
         <label className="field">
-          <span>Nombre</span>
-          <input className="input" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-        </label>
-        <label className="field" style={{ maxWidth: 100 }}>
-          <span>Número</span>
-          <input className="input" inputMode="numeric" value={numero} onChange={(e) => setNumero(e.target.value.replace(/\D/g, ""))} />
-        </label>
-        <label className="field" style={{ maxWidth: 160 }}>
-          <span>Posición</span>
-          <input className="input" value={posicion} onChange={(e) => setPosicion(e.target.value)} />
+          <span>Nombre y apellido</span>
+          <input
+            className="input"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Ej.: Juan Pérez"
+            maxLength={80}
+            autoComplete="off"
+            required
+          />
         </label>
         <button className="btn btn-primary" type="submit" disabled={!equipoId}>
           Agregar jugador
@@ -156,9 +140,7 @@ export function AdminJugadores() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Nombre</th>
-              <th>Posición</th>
+              <th>Nombre y apellido</th>
               <th></th>
             </tr>
           </thead>
@@ -166,30 +148,14 @@ export function AdminJugadores() {
             {jugadores.map((j) =>
               editando?.id === j.id ? (
                 <tr key={j.id}>
-                  <td style={{ width: 80 }}>
-                    <input
-                      className="input input-sm"
-                      inputMode="numeric"
-                      value={editando.numero}
-                      onChange={(e) => setEditando({ ...editando, numero: e.target.value.replace(/\D/g, "") })}
-                      aria-label="Número"
-                    />
-                  </td>
                   <td>
                     <input
                       className="input input-sm"
                       value={editando.nombre}
                       onChange={(e) => setEditando({ ...editando, nombre: e.target.value })}
-                      aria-label="Nombre"
+                      aria-label="Nombre y apellido"
+                      maxLength={80}
                       autoFocus
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="input input-sm"
-                      value={editando.posicion}
-                      onChange={(e) => setEditando({ ...editando, posicion: e.target.value })}
-                      aria-label="Posición"
                     />
                   </td>
                   <td className="row-actions">
@@ -203,14 +169,12 @@ export function AdminJugadores() {
                 </tr>
               ) : (
                 <tr key={j.id}>
-                  <td className="tnum">{j.numero ?? "—"}</td>
                   <td>{j.nombre}</td>
-                  <td>{j.posicion ?? "—"}</td>
                   <td className="row-actions">
                     <button
                       className="btn btn-ghost btn-sm"
                       onClick={() =>
-                        setEditando({ id: j.id, nombre: j.nombre, numero: j.numero?.toString() ?? "", posicion: j.posicion ?? "" })
+                        setEditando({ id: j.id, nombre: j.nombre })
                       }
                     >
                       Editar
@@ -224,7 +188,7 @@ export function AdminJugadores() {
             )}
             {jugadores.length === 0 && (
               <tr>
-                <td colSpan={4} className="empty-row">
+                <td colSpan={2} className="empty-row">
                   Todavía no hay jugadores en este equipo.
                 </td>
               </tr>

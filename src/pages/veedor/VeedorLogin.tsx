@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
@@ -29,9 +29,9 @@ export function VeedorLogin() {
   return (
     <div className="auth-page">
       <form className="login-card" onSubmit={onSubmit}>
-        <div className="wordmark" style={{ marginBottom: 18 }}>
-          <span className="ball" />
-          Bosco<span className="cup">Cup</span>
+        <div className="login-logo">
+          <img className="only-light" src="/logo-bosco-cup.png" alt="Bosco Cup" />
+          <img className="only-dark" src="/logo-bosco-cup-dark.png" alt="Bosco Cup" />
         </div>
         <h1 className="login-title">Soy veedor</h1>
         <p className="form-hint">Ingresá el PIN de 6 dígitos que te dio el organizador.</p>
@@ -61,6 +61,9 @@ export function VeedorLogin() {
         <button className="btn btn-primary" type="submit" disabled={submitting || pin.length < 6}>
           {submitting ? "Ingresando…" : "Ingresar"}
         </button>
+        <Link className="back-link" to="/">
+          ← Volver a los resultados
+        </Link>
       </form>
     </div>
   );

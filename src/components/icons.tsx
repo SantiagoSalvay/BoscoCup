@@ -25,20 +25,6 @@ export function IconVoley(props: IconProps) {
   );
 }
 
-export function IconBasquet(props: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" {...props}>
-      <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path
-        d="M12 2.5v19M2.5 12h19M4.5 5.8c3.4 3.4 3.4 9 0 12.4M19.5 5.8c-3.4 3.4-3.4 9 0 12.4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-    </svg>
-  );
-}
-
 export function IconSun(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" {...props}>
@@ -230,6 +216,36 @@ export function Shield({ fill, ...rest }: IconProps & { fill: string }) {
   return (
     <svg viewBox="0 0 46 52" {...rest}>
       <path d="M23 1 44 7v18C44 39 35 48 23 51 11 48 2 39 2 25V7z" fill={fill} />
+    </svg>
+  );
+}
+
+/** Acceso del staff (organizador / veedor). */
+export function IconAccess(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...props}>
+      <path d="M12 2.8 19.5 5.6v6.1c0 4.6-3.1 8.2-7.5 9.5-4.4-1.3-7.5-4.9-7.5-9.5V5.6z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <circle cx="12" cy="10.3" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M8.4 16c.8-1.7 2.1-2.5 3.6-2.5s2.8.8 3.6 2.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconWhistle(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...props}>
+      <path d="M9.5 9H21v4.2l-5.6 1.4A5.5 5.5 0 1 1 9.5 9Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <circle cx="9.5" cy="14.5" r="1.6" fill="currentColor" />
+      <path d="M13 9V6.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function IconClipboard(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" {...props}>
+      <rect x="5" y="4.5" width="14" height="16.5" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M9 4.5V3h6v1.5M8.5 10h7M8.5 13.5h7M8.5 17h4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   );
 }

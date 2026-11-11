@@ -1,11 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
+import { categoriaLabel } from "@/lib/labels";
 import type { Categoria, EquipoRow, GrupoRow } from "@/lib/db-types";
 
-function categoriaLabel(c: Categoria): string {
-  const deporte = c.deporte[0].toUpperCase() + c.deporte.slice(1);
-  return `${deporte} · ${c.rama}`;
-}
 
 /** Próximo nombre libre: "Grupo A", "Grupo B", … */
 function siguienteNombreGrupo(grupos: GrupoRow[]): string {
@@ -24,7 +21,7 @@ export function AdminEquipos() {
   const [grupos, setGrupos] = useState<GrupoRow[]>([]);
   const [grupoDeEquipo, setGrupoDeEquipo] = useState<Map<string, string>>(new Map());
   const [nombre, setNombre] = useState("");
-  const [color, setColor] = useState("#2F55FF");
+  const [color, setColor] = useState("#0F2147");
   const [editando, setEditando] = useState<{ id: string; nombre: string; color: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 

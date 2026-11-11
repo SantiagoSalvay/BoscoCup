@@ -36,7 +36,7 @@ datasource db {
 enum Deporte {
   futbol
   voley
-  basquet
+  basquet // sin uso desde 0006: queda en el enum porque Postgres no permite quitar valores
 
   @@map("deporte")
 }
@@ -158,8 +158,8 @@ model Jugador {
   id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   equipoId               String   @map("equipo_id") @db.Uuid
   nombre                 String
-  numero                 Int?
-  posicion               String?
+  numero                 Int? // ya no se pide al inscribir (0006)
+  posicion               String? // ya no se pide al inscribir (0006)
   dni                    String?
   fotoUrl                String?  @map("foto_url")
   suspendidoHastaPartido Int?     @map("suspendido_hasta_partido")
@@ -172,7 +172,6 @@ model Jugador {
   formaciones          Formacion[]
   sanciones            Sancion[]
 
-  @@unique([equipoId, numero])
   @@map("jugadores")
 }
 

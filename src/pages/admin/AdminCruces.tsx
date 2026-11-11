@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { categoriaLabel } from "@/lib/labels";
 import { computeZonesForCategoria, type ZonasCategoria } from "@/lib/standings";
 import { generarCruces } from "@/lib/bracket";
 import type { Categoria, EquipoRow, PartidoRow } from "@/lib/db-types";
 import { Shield } from "@/components/icons";
 
-function categoriaLabel(c: Categoria): string {
-  const deporte = c.deporte[0].toUpperCase() + c.deporte.slice(1);
-  return `${deporte} · ${c.rama}`;
-}
 
 interface CruceRow {
   id: string;

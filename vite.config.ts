@@ -10,12 +10,12 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg"],
+      includeAssets: ["favicon.png", "logo-bosco-cup.png", "logo-bosco-cup-dark.png"],
       manifest: {
         name: "BoscoCup",
         short_name: "BoscoCup",
         description: "Resultados, tablas y cruces en vivo del torneo BoscoCup",
-        theme_color: "#2F55FF",
+        theme_color: "#0F2147",
         background_color: "#FFFFFF",
         display: "standalone",
         start_url: "/",

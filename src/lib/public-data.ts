@@ -6,13 +6,17 @@ import { computeZonesForCategoria, teamFrom } from "@/lib/standings";
 const ROUND_ORDER = ["Octavos", "Cuartos", "Semifinal", "3er puesto", "Final"];
 
 function ramaDe(sport: Sport, branch: Branch): string {
-  if (sport === "basquet") return "Único";
-  return branch === "masculino" ? "Masculino" : "Femenino";
+  if (sport === "voley") return "Mixto";
+  return branch === "femenino" ? "Femenino" : "Masculino";
 }
 
 function ramaLabelDe(cat: Categoria): string {
-  const deporte = cat.deporte[0].toUpperCase() + cat.deporte.slice(1);
+  const deporte = cat.deporte === "voley" ? "Vóley" : "Fútbol";
   return cat.rama === "Único" ? deporte : `${deporte} ${cat.rama}`;
+}
+
+function branchDe(cat: Categoria): Branch {
+  return cat.rama === "Femenino" ? "femenino" : cat.rama === "Mixto" ? "mixto" : "masculino";
 }
 
 function scoreDesde(partido: PartidoRow, eventos: EventoPartidoRow[]): { home: number; away: number } {
@@ -79,17 +83,19 @@ export async function fetchAllLiveMatches(): Promise<LiveMatch[]> {
     .filter((p) => equipoMap.has(p.equipo_local_id) && equipoMap.has(p.equipo_visitante_id as string) && categoriaMap.has(p.categoria_id))
     .map((p) => {
       const cat = categoriaMap.get(p.categoria_id) as Categoria;
-      const { home: homeScore, away: awayScore } = scoreDesde(p, eventos);
+      // En vóley el veedor va guardando los sets ganados directamente en el resultado.
+      const { home: homeScore, away: awayScore } =
+        cat.deporte === "voley" ? { home: p.resultado_local ?? 0, away: p.resultado_visitante ?? 0 } : scoreDesde(p, eventos);
       return {
         id: p.id,
         sport: cat.deporte,
-        branch: cat.rama === "Femenino" ? "femenino" : "masculino",
+        branch: branchDe(cat),
         ramaLabel: ramaLabelDe(cat),
         home: equipoMap.get(p.equipo_local_id) as Team,
         away: equipoMap.get(p.equipo_visitante_id as string) as Team,
         homeScore,
         awayScore,
-        statusLabel: p.estado === "entretiempo" ? "ENTRETIEMPO" : "EN VIVO",
+        statusLabel: p.estado === "entretiempo" ? "ENTRETIEMPO" : cat.deporte === "voley" ? "EN VIVO · SETS" : "EN VIVO",
         court: p.cancha_id ? canchaMap.get(p.cancha_id) ?? "" : ""
       };
     });

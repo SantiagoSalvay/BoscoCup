@@ -8,8 +8,6 @@ export type ResultadoLetra = "G" | "E" | "P";
 export interface TeamPlayer {
   id: string;
   name: string;
-  number: number | null;
-  position: string | null;
   goals: number;
   amarillas: number;
   rojas: number;
@@ -44,7 +42,7 @@ export interface TeamDetail {
 }
 
 function categoriaLabel(cat: Categoria): string {
-  const deporte = { futbol: "Fútbol", voley: "Vóley", basquet: "Básquet" }[cat.deporte];
+  const deporte = cat.deporte === "voley" ? "Vóley" : "Fútbol";
   return cat.rama === "Único" ? deporte : `${deporte} ${cat.rama}`;
 }
 
@@ -77,7 +75,7 @@ export async function fetchTeamDetail(teamId: string): Promise<TeamDetail | null
 
   const [{ zones, equipos, partidos, grupos }, { data: jugadoresData }] = await Promise.all([
     computeZonesForCategoria(cat),
-    supabase.from("jugadores").select("*").eq("equipo_id", teamId).order("numero")
+    supabase.from("jugadores").select("*").eq("equipo_id", teamId).order("nombre")
   ]);
   const jugadores = (jugadoresData as JugadorRow[]) ?? [];
 
@@ -120,11 +118,9 @@ export async function fetchTeamDetail(teamId: string): Promise<TeamDetail | null
     .map((j) => ({
       id: j.id,
       name: j.nombre,
-      number: j.numero,
-      position: j.posicion,
       ...(porJugador.get(j.id) ?? { goals: 0, amarillas: 0, rojas: 0 })
     }))
-    .sort((a, b) => b.goals - a.goals || (a.number ?? 999) - (b.number ?? 999));
+    .sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name, "es"));
 
   // ---- partidos ----
   const equipoMap = new Map(equipos.map((e) => [e.id, teamFrom(e)]));
@@ -155,7 +151,11 @@ export async function fetchTeamDetail(teamId: string): Promise<TeamDetail | null
         home = p.resultado_local ?? 0;
         away = p.resultado_visitante ?? 0;
       } else if (enVivo) {
-        ({ home, away } = marcadorEnVivo(p));
+        // Vóley: el resultado parcial son los sets ganados, que el veedor guarda en el partido.
+        if (cat.deporte === "voley") {
+          home = p.resultado_local ?? 0;
+          away = p.resultado_visitante ?? 0;
+        } else ({ home, away } = marcadorEnVivo(p));
       }
       const gf = isHome ? home : away;
       const ga = isHome ? away : home;

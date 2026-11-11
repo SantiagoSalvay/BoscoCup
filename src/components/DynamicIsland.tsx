@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { LiveMatch, Sport, Team } from "@/types";
-import { IconBasquet, IconFutbol, IconVoley, Shield } from "@/components/icons";
+import { IconFutbol, IconVoley, Shield } from "@/components/icons";
 
 const SPORT_ICON: Record<Sport, typeof IconFutbol> = {
   futbol: IconFutbol,
-  voley: IconVoley,
-  basquet: IconBasquet
+  voley: IconVoley
 };
 
 /** "Güemes" -> "GÜE": sigla corta para que entre el marcador en la isla compacta. */

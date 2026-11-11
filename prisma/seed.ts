@@ -22,9 +22,7 @@ async function main() {
   const categorias = [
     { deporte: "futbol" as const, rama: "Masculino", puntosVictoria: 3, puntosEmpate: 1, puntosDerrota: 0 },
     { deporte: "futbol" as const, rama: "Femenino", puntosVictoria: 3, puntosEmpate: 1, puntosDerrota: 0 },
-    { deporte: "voley" as const, rama: "Masculino", puntosVictoria: 0, puntosEmpate: 0, puntosDerrota: 0 },
-    { deporte: "voley" as const, rama: "Femenino", puntosVictoria: 0, puntosEmpate: 0, puntosDerrota: 0 },
-    { deporte: "basquet" as const, rama: "Único", puntosVictoria: 2, puntosEmpate: 0, puntosDerrota: 1 }
+    { deporte: "voley" as const, rama: "Mixto", puntosVictoria: 0, puntosEmpate: 0, puntosDerrota: 0 }
   ];
 
   for (const c of categorias) {
@@ -39,8 +37,7 @@ async function main() {
     { id: "00000000-0000-0000-0000-000000000011", nombre: "Cancha 1 (Fútbol)", deportes: ["futbol" as const] },
     { id: "00000000-0000-0000-0000-000000000012", nombre: "Cancha 2 (Fútbol)", deportes: ["futbol" as const] },
     { id: "00000000-0000-0000-0000-000000000013", nombre: "Cancha 3 (Vóley)", deportes: ["voley" as const] },
-    { id: "00000000-0000-0000-0000-000000000014", nombre: "Cancha 4 (Vóley)", deportes: ["voley" as const] },
-    { id: "00000000-0000-0000-0000-000000000015", nombre: "Cancha 5 (Básquet)", deportes: ["basquet" as const] }
+    { id: "00000000-0000-0000-0000-000000000014", nombre: "Cancha 4 (Vóley)", deportes: ["voley" as const] }
   ];
 
   for (const c of canchas) {
@@ -51,7 +48,7 @@ async function main() {
     });
   }
 
-  console.log("Seed listo: torneo, 5 categorías y 5 canchas.");
+  console.log("Seed listo: torneo, 3 categorías (fútbol masc./fem. y vóley mixto) y 4 canchas.");
 }
 
 main()

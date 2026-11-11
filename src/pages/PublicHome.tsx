@@ -8,8 +8,9 @@ import { DynamicIsland } from "@/components/DynamicIsland";
 import { Segmented } from "@/components/Segmented";
 import { TeamSheet, type TeamRef } from "@/components/TeamSheet";
 import {
-  IconBasquet,
+  IconAccess,
   IconBracket,
+  IconClipboard,
   IconFollow,
   IconFutbol,
   IconHome,
@@ -17,14 +18,13 @@ import {
   IconSun,
   IconTable,
   IconVoley,
-  LogoMark,
+  IconWhistle,
   Shield
 } from "@/components/icons";
 
 const SPORTS: { id: Sport; label: string; icon: typeof IconFutbol }[] = [
   { id: "futbol", label: "Fútbol", icon: IconFutbol },
-  { id: "voley", label: "Vóley", icon: IconVoley },
-  { id: "basquet", label: "Básquet", icon: IconBasquet }
+  { id: "voley", label: "Vóley mixto", icon: IconVoley }
 ];
 
 const PESTANAS = [
@@ -56,8 +56,11 @@ export function PublicHome() {
   const [pestana, setPestana] = useState<Pestana>("inicio");
   const [equipo, setEquipo] = useState<TeamRef | null>(null);
 
-  const hasBranches = sport !== "basquet";
-  const ramaActual: Branch = hasBranches ? branch : "masculino";
+  const [accesoAbierto, setAccesoAbierto] = useState(false);
+
+  // Solo fútbol tiene ramas; vóley se juega mixto.
+  const hasBranches = sport === "futbol";
+  const ramaActual: Branch = hasBranches ? branch : "mixto";
 
   useEffect(() => {
     const root = document.documentElement;
@@ -70,11 +73,11 @@ export function PublicHome() {
 
     async function load() {
       if (!isSupabaseConfigured) {
-        setData(getMockData(sport, branch));
+        setData(getMockData(sport, ramaActual));
         setLiveMatches(getMockAllLiveMatches());
         return;
       }
-      const [d, live] = await Promise.all([fetchPublicData(sport, branch), fetchAllLiveMatches()]);
+      const [d, live] = await Promise.all([fetchPublicData(sport, ramaActual), fetchAllLiveMatches()]);
       if (active) {
         setData(d);
         setLiveMatches(live);
@@ -86,7 +89,7 @@ export function PublicHome() {
     if (!client) return () => { active = false; };
 
     const channel = client
-      .channel(`public-${sport}-${branch}`)
+      .channel(`public-${sport}-${ramaActual}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "partidos" }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "eventos_partido" }, load)
       .subscribe();
@@ -95,7 +98,7 @@ export function PublicHome() {
       active = false;
       client.removeChannel(channel);
     };
-  }, [sport, branch]);
+  }, [sport, ramaActual]);
 
   function toggleTheme() {
     const actual = theme ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -123,15 +126,25 @@ export function PublicHome() {
       <DynamicIsland matches={liveMatches} onTeam={abrirDesdeVivo} />
 
       <header className="pub-head">
-        <h1 className="pub-title">
-          <LogoMark className="pub-logo" aria-hidden="true" />
-          Bosco<span>Cup</span>
-        </h1>
-        <button className="icon-btn" type="button" aria-label="Cambiar tema claro/oscuro" onClick={toggleTheme}>
-          <IconMoon className="only-light" />
-          <IconSun className="only-dark" />
-        </button>
+        <div className="brand">
+          <img className="brand-logo only-light" src="/logo-bosco-cup.png" alt="" width={38} height={64} />
+          <img className="brand-logo only-dark" src="/logo-bosco-cup-dark.png" alt="" width={38} height={64} />
+          <div>
+            <h1 className="pub-title">
+              Bosco<span>Cup</span>
+            </h1>
+            <p className="brand-sub">Fútbol · Vóley</p>
+          </div>
+        </div>
+        <div className="head-actions">
+          <button className="icon-btn" type="button" aria-label="Cambiar tema claro/oscuro" onClick={toggleTheme}>
+            <IconMoon className="only-light" />
+            <IconSun className="only-dark" />
+          </button>
+          <BotonAcceso onClick={() => setAccesoAbierto(true)} />
+        </div>
       </header>
+      <div className="brand-rule" aria-hidden="true" />
 
       <div className="pub-controls">
         <Segmented
@@ -203,12 +216,6 @@ export function PublicHome() {
             <Historial matches={data.historial} onTeam={abrirEquipo} />
           </section>
         )}
-
-        <footer className="role-footer">
-          <Link to="/admin/login">Soy organizador</Link>
-          <span aria-hidden="true">·</span>
-          <Link to="/veedor/login">Soy veedor</Link>
-        </footer>
       </main>
 
       <nav className="tabbar" aria-label="Secciones" style={{ "--n": PESTANAS.length, "--i": tabIndex } as CSSProperties}>
@@ -222,6 +229,69 @@ export function PublicHome() {
       </nav>
 
       <TeamSheet target={equipo} onClose={() => setEquipo(null)} />
+      {accesoAbierto && <HojaAcceso onClose={() => setAccesoAbierto(false)} />}
+    </div>
+  );
+}
+
+/**
+ * Botón con el logo del batallón organizador. Si todavía no se subió
+ * public/logo-batallon.png, muestra un ícono genérico de acceso.
+ */
+function BotonAcceso({ onClick }: { onClick: () => void }) {
+  const [sinLogo, setSinLogo] = useState(false);
+  return (
+    <button className="org-btn" type="button" aria-label="Acceso para organizadores y veedores" onClick={onClick}>
+      {sinLogo ? <IconAccess /> : <img src="/logo-batallon.png" alt="" onError={() => setSinLogo(true)} />}
+    </button>
+  );
+}
+
+function HojaAcceso({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div className="sheet-overlay" onClick={onClose}>
+      <div className="sheet access-sheet" role="dialog" aria-modal="true" aria-labelledby="acceso-titulo" onClick={(e) => e.stopPropagation()}>
+        <div className="sheet-title" id="acceso-titulo">
+          Acceso del staff
+        </div>
+        <p className="access-intro">Esta sección es solo para quienes organizan el torneo. Si venís a ver resultados, no necesitás entrar.</p>
+
+        <Link className="access-option" to="/veedor/login">
+          <span className="access-ico">
+            <IconWhistle />
+          </span>
+          <div>
+            <strong>Soy veedor</strong>
+            <span>Cargás goles y tarjetas de los partidos que te asignaron. Entrás con tu PIN de 6 dígitos.</span>
+          </div>
+          <span className="access-arrow" aria-hidden="true">
+            →
+          </span>
+        </Link>
+
+        <Link className="access-option org" to="/admin/login">
+          <span className="access-ico">
+            <IconClipboard />
+          </span>
+          <div>
+            <strong>Soy organizador</strong>
+            <span>Equipos, jugadores, fixture, canchas, horarios y veedores. Entrás con tu email y contraseña.</span>
+          </div>
+          <span className="access-arrow" aria-hidden="true">
+            →
+          </span>
+        </Link>
+
+        <button className="btn btn-ghost" style={{ marginTop: 14, width: "100%" }} onClick={onClose}>
+          Volver
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,12 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { categoriaLabel } from "@/lib/labels";
 import type { CanchaRow, Categoria, EquipoRow, PartidoRow, Profile } from "@/lib/db-types";
 
-function categoriaLabel(c: Categoria): string {
-  const deporte = c.deporte[0].toUpperCase() + c.deporte.slice(1);
-  return `${deporte} · ${c.rama}`;
-}
 
 const ROUND_ORDER = ["Octavos", "Cuartos", "Semifinal", "3er puesto", "Final"];
 
@@ -27,10 +24,34 @@ function horarioCorto(iso: string | null): string {
   })}`;
 }
 
-/** Los cruces sin jugar son los únicos que se programan desde su propia fila. */
-function esCruceEditable(p: PartidoRow): boolean {
-  return Boolean(p.ronda_eliminatoria) && p.estado !== "finalizado";
+/** Cualquier partido que todavía no empezó (grupos o cruces) se reprograma desde su fila. */
+function esProgramable(p: PartidoRow): boolean {
+  return p.estado === "programado" || p.estado === "postergado" || p.estado === "suspendido";
 }
+
+/**
+ * Todos contra todos por el método del círculo: devuelve las fechas en orden,
+ * cada una con sus cruces, alternando localía para que quede pareja.
+ */
+function todosContraTodos(ids: string[]): [string, string][][] {
+  const t: (string | null)[] = [...ids];
+  if (t.length % 2) t.push(null);
+  const n = t.length;
+  const fechas: [string, string][][] = [];
+  for (let r = 0; r < n - 1; r++) {
+    const cruces: [string, string][] = [];
+    for (let i = 0; i < n / 2; i++) {
+      const a = t[i];
+      const b = t[n - 1 - i];
+      if (a && b) cruces.push(r % 2 === 0 ? [a, b] : [b, a]);
+    }
+    fechas.push(cruces);
+    t.splice(1, 0, t.pop() as string | null);
+  }
+  return fechas;
+}
+
+const clavePar = (a: string, b: string) => [a, b].sort().join("|");
 
 interface PartidoConNombres extends PartidoRow {
   local_nombre: string;
@@ -175,7 +196,74 @@ export function AdminPartidos() {
     loadPartidos(categoriaId);
   }
 
-  /** Guarda cancha y/o horario de un cruce y avisa si choca con otro partido en la misma cancha. */
+  /**
+   * Arma automáticamente el fixture de la fase de grupos: todos contra todos
+   * dentro de cada grupo (o de la categoría entera si no hay grupos). No
+   * duplica partidos que ya existan; quedan sin cancha ni horario para
+   * completarlos fila por fila.
+   */
+  async function onGenerarFixture() {
+    if (!supabase || !categoriaId) return;
+    setError(null);
+    setAviso(null);
+
+    const [{ data: gruposData }, { data: equiposData }, { data: existentes }] = await Promise.all([
+      supabase.from("grupos").select("id, nombre").eq("categoria_id", categoriaId).order("nombre"),
+      supabase.from("equipos").select("id").eq("categoria_id", categoriaId),
+      supabase.from("partidos").select("equipo_local_id, equipo_visitante_id").eq("categoria_id", categoriaId).is("ronda_eliminatoria", null)
+    ]);
+    const grupos = (gruposData as { id: string; nombre: string }[]) ?? [];
+    const todos = ((equiposData as { id: string }[]) ?? []).map((e) => e.id);
+
+    let zonas: { grupoId: string | null; equipos: string[] }[];
+    if (grupos.length > 0) {
+      const { data: geData } = await supabase
+        .from("grupo_equipos")
+        .select("grupo_id, equipo_id")
+        .in(
+          "grupo_id",
+          grupos.map((g) => g.id)
+        );
+      const ge = (geData as { grupo_id: string; equipo_id: string }[]) ?? [];
+      zonas = grupos.map((g) => ({ grupoId: g.id, equipos: ge.filter((x) => x.grupo_id === g.id).map((x) => x.equipo_id) }));
+      const sinGrupo = todos.filter((id) => !ge.some((x) => x.equipo_id === id));
+      if (sinGrupo.length > 0) {
+        return setError(`Hay ${sinGrupo.length} equipo(s) sin grupo asignado. Asignalos en Equipos antes de armar el fixture.`);
+      }
+    } else {
+      zonas = [{ grupoId: null, equipos: todos }];
+    }
+
+    const yaJugados = new Set(
+      ((existentes as { equipo_local_id: string; equipo_visitante_id: string | null }[]) ?? [])
+        .filter((p) => p.equipo_visitante_id)
+        .map((p) => clavePar(p.equipo_local_id, p.equipo_visitante_id as string))
+    );
+
+    const nuevos: { categoria_id: string; grupo_id: string | null; equipo_local_id: string; equipo_visitante_id: string }[] = [];
+    for (const zona of zonas) {
+      if (zona.equipos.length < 2) continue;
+      for (const fecha of todosContraTodos(zona.equipos)) {
+        for (const [local, visitante] of fecha) {
+          if (yaJugados.has(clavePar(local, visitante))) continue;
+          nuevos.push({ categoria_id: categoriaId, grupo_id: zona.grupoId, equipo_local_id: local, equipo_visitante_id: visitante });
+        }
+      }
+    }
+
+    if (nuevos.length === 0) {
+      return setAviso(todos.length < 2 ? "Cargá al menos 2 equipos para armar el fixture." : "El fixture de grupos ya está completo.");
+    }
+    if (!window.confirm(`Se van a crear ${nuevos.length} partidos de fase de grupos (todos contra todos). Después les asignás cancha y horario. ¿Seguimos?`)) {
+      return;
+    }
+    const { error: err } = await supabase.from("partidos").insert(nuevos);
+    if (err) return setError(`No se pudo armar el fixture: ${err.message}`);
+    setAviso(`Listo: ${nuevos.length} partidos creados. Completá cancha y horario en cada fila.`);
+    loadPartidos(categoriaId);
+  }
+
+  /** Guarda cancha y/o horario de un partido y avisa si choca con otro en la misma cancha. */
   async function onProgramarCruce(p: PartidoConNombres, cambios: { cancha_id?: string | null; fecha_hora_programada?: string | null }) {
     if (!supabase) return;
     setError(null);
@@ -223,8 +311,9 @@ export function AdminPartidos() {
     <div>
       <h2 className="page-title">Partidos</h2>
       <p className="form-hint">
-        Los partidos de fase de grupos se programan con el formulario. Los cruces se generan desde la sección
-        Cruces y acá les elegís cancha y horario directamente en su fila.
+        El fixture de la fase de grupos se arma solo (todos contra todos dentro de cada grupo). Los cruces se
+        generan desde la sección Cruces. A cualquier partido que todavía no empezó le podés cambiar la cancha y
+        el horario directamente en su fila.
       </p>
 
       <label className="field" style={{ maxWidth: 320, marginBottom: 20 }}>
@@ -238,7 +327,21 @@ export function AdminPartidos() {
         </select>
       </label>
 
-      <form className="panel form-row" onSubmit={onSubmit}>
+      <section className="panel fixture-panel">
+        <div>
+          <h3 className="panel-title">Fixture de fase de grupos</h3>
+          <p className="form-hint" style={{ margin: 0 }}>
+            Crea todos los partidos que falten entre los equipos de cada grupo. No duplica los que ya existen.
+          </p>
+        </div>
+        <button className="btn btn-accent" type="button" onClick={onGenerarFixture} disabled={!categoriaId}>
+          Armar fixture
+        </button>
+      </section>
+
+      <details className="panel manual-match">
+        <summary>Agregar un partido a mano (desempates, amistosos)</summary>
+      <form className="form-row" onSubmit={onSubmit}>
         <label className="field">
           <span>Local</span>
           <select className="input" value={localId} onChange={(e) => setLocalId(e.target.value)} required>
@@ -280,6 +383,7 @@ export function AdminPartidos() {
           Programar partido
         </button>
       </form>
+      </details>
       {error && <p className="form-error">{error}</p>}
       {aviso && <p className="form-hint form-hint-warn">{aviso}</p>}
 
@@ -297,7 +401,7 @@ export function AdminPartidos() {
           </thead>
           <tbody>
             {partidos.map((p) => {
-              const editable = esCruceEditable(p);
+              const editable = esProgramable(p);
               const faltaProgramar = editable && (!p.cancha_id || !p.fecha_hora_programada);
               return (
               <tr key={p.id} className={faltaProgramar ? "row-pending" : ""}>

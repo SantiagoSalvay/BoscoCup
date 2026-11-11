@@ -1,5 +1,6 @@
-export type Sport = "futbol" | "voley" | "basquet";
-export type Branch = "masculino" | "femenino";
+export type Sport = "futbol" | "voley";
+/** Fútbol se juega en masculino y femenino; vóley es una sola rama mixta. */
+export type Branch = "masculino" | "femenino" | "mixto";
 
 export interface Team {
   id: string;

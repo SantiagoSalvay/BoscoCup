@@ -16,8 +16,7 @@ type Vista = "resumen" | "partidos" | "plantel";
 
 const PUNTOS_LABEL: Record<Sport, { a: string; c: string; anota: string }> = {
   futbol: { a: "GF", c: "GC", anota: "Goles" },
-  voley: { a: "SF", c: "SC", anota: "Puntos" },
-  basquet: { a: "PF", c: "PC", anota: "Puntos" }
+  voley: { a: "SF", c: "SC", anota: "Puntos" }
 };
 
 const RESULTADO_TEXTO = { G: "Ganó", E: "Empató", P: "Perdió" } as const;
@@ -251,9 +250,9 @@ export function TeamSheet({ target, onClose }: { target: TeamRef | null; onClose
                   {detail.players
                     .filter((p) => p.goals > 0)
                     .slice(0, 3)
-                    .map((p) => (
+                    .map((p, i) => (
                       <div className="ts-scorer" key={p.id}>
-                        <span className="ts-num tnum">{p.number ?? "–"}</span>
+                        <span className="ts-num tnum">{i + 1}.</span>
                         <span className="ts-scorer-name">{p.name}</span>
                         <b className="tnum">{p.goals}</b>
                       </div>
@@ -293,7 +292,6 @@ export function TeamSheet({ target, onClose }: { target: TeamRef | null; onClose
             <table className="ts-roster">
               <thead>
                 <tr>
-                  <th>#</th>
                   <th>Jugador</th>
                   <th title={labels.anota}>{detail.sport === "futbol" ? "G" : "Pts"}</th>
                   <th title="Amarillas">
@@ -307,10 +305,8 @@ export function TeamSheet({ target, onClose }: { target: TeamRef | null; onClose
               <tbody>
                 {detail.players.map((p) => (
                   <tr key={p.id}>
-                    <td className="tnum ts-num">{p.number ?? "–"}</td>
                     <td>
                       <span className="ts-player">{p.name}</span>
-                      {p.position && <span className="ts-sub">{p.position}</span>}
                     </td>
                     <td className="tnum">{p.goals || "–"}</td>
                     <td className="tnum">{p.amarillas || "–"}</td>
