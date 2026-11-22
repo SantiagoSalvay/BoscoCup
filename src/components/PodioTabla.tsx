@@ -36,7 +36,8 @@ export function PodioTabla({
   };
   let siguiente = 0;
   const [campeon, sub, tercero] = fijos.map((id) => (id ? filas.find((r) => r.team.id === id) ?? null : definido(siguiente++)));
-  const lider = !zona.completa && filas[0]?.played > 0 ? filas[0] : null;
+  // Con la campeona ya fijada por la organización no tiene sentido mostrar quién "va primera".
+  const lider = !manual?.campeon && !zona.completa && filas[0]?.played > 0 ? filas[0] : null;
 
   const nombre = (r: StandingRow | null, clase: string) =>
     r ? (

@@ -156,9 +156,8 @@ export function BracketView({ matches, onTeam, renderExtra }: Props) {
   const filas = Math.max(1, (PARTIDOS[primera] ?? 1) / 2);
   const final = porRonda.get("Final")?.get(0) ?? null;
   const tercero = porRonda.get("3er puesto")?.get(0) ?? null;
-  // Con la final en juego, el que va ganando aparece como campeón (provisorio).
-  const campeon =
-    final && (!final.pending || final.enVivo) && final.winnerId ? (final.winnerId === final.home.id ? final.home : final.away) : null;
+  // El campeón aparece recién cuando el planillero cierra la final (no mientras se juega).
+  const campeon = final && !final.pending && final.winnerId ? (final.winnerId === final.home.id ? final.home : final.away) : null;
   const subcampeon = campeon && final ? (campeon.id === final.home.id ? final.away : final.home) : null;
 
   const columna = (ronda: string, lado: 0 | 1, idx: number) => {
@@ -216,7 +215,7 @@ export function BracketView({ matches, onTeam, renderExtra }: Props) {
             <div className="bk-podio-top">
               <img className="bk-logo only-light" src="/logo-bosco-cup.png" alt="Bosco Cup" />
               <img className="bk-logo only-dark" src="/logo-bosco-cup-dark.png" alt="Bosco Cup" />
-              <div className={`bk-champ ${campeon ? "set" : ""} ${campeon && final?.enVivo ? "prov" : ""}`}>
+              <div className={`bk-champ ${campeon ? "set" : ""}`}>
                 <Trofeo className="bk-trophy" />
                 <span className="bk-champ-label">Campeón</span>
                 {campeon ? (
