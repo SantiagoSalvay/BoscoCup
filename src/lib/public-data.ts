@@ -151,7 +151,11 @@ export async function fetchHorarios(): Promise<HorarioMatch[]> {
       const ta = a.fecha_hora_programada ? new Date(a.fecha_hora_programada).getTime() : Infinity;
       const tb = b.fecha_hora_programada ? new Date(b.fecha_hora_programada).getTime() : Infinity;
       if (ta !== tb) return ta < tb ? -1 : 1;
-      return (canchaMap.get(a.cancha_id ?? "") ?? "").localeCompare(canchaMap.get(b.cancha_id ?? "") ?? "", "es", { numeric: true });
+      // Sin hora: por cancha y, dentro de cada una, en el orden en que se juegan.
+      return (
+        (canchaMap.get(a.cancha_id ?? "") ?? "").localeCompare(canchaMap.get(b.cancha_id ?? "") ?? "", "es", { numeric: true }) ||
+        (a.orden_cancha ?? Infinity) - (b.orden_cancha ?? Infinity)
+      );
     })
     .map((p) => {
       const cat = categoriaMap.get(p.categoria_id) as Categoria;
@@ -167,6 +171,7 @@ export async function fetchHorarios(): Promise<HorarioMatch[]> {
         away: p.equipo_visitante_id ? equipoMap.get(p.equipo_visitante_id) ?? null : null,
         fecha: p.fecha_hora_programada,
         court: p.cancha_id ? canchaMap.get(p.cancha_id) ?? null : null,
+        orden: p.orden_cancha ?? null,
         roundLabel: p.ronda_eliminatoria ?? (p.grupo_id ? grupoMap.get(p.grupo_id) ?? "Fase de grupos" : sinPlayoff(cat) ? "Todos contra todos" : "Fase de grupos"),
         estado: enVivo ? "en_vivo" : p.estado === "finalizado" || p.estado === "walkover" ? "finalizado" : p.estado === "programado" ? "programado" : "suspendido",
         homeScore: marcador ? marcador.home : conResultado ? p.resultado_local : null,

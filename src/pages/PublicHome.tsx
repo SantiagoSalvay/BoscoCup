@@ -483,7 +483,8 @@ function Horarios({ matches, onTeam }: { matches: HorarioMatch[] | null; onTeam:
 
   const bloques: { hora: string; partidos: HorarioMatch[] }[] = [];
   for (const m of visibles) {
-    const hora = m.fecha ? horaCorta(m.fecha) : "Sin horario";
+    // Sin hora fija (vóley): un bloque por cancha, en el orden en que se juegan.
+    const hora = m.fecha ? horaCorta(m.fecha) : m.court && m.orden ? `${m.court} · a continuación` : "Sin horario";
     const ultimo = bloques[bloques.length - 1];
     if (ultimo?.hora === hora) ultimo.partidos.push(m);
     else bloques.push({ hora, partidos: [m] });
@@ -518,7 +519,10 @@ function Horarios({ matches, onTeam }: { matches: HorarioMatch[] | null; onTeam:
               return (
                 <div className={`duel hor-partido ${m.estado === "finalizado" ? "" : "pending"}`} key={m.id} style={{ "--sport": `var(--color-${m.sport})` } as CSSProperties}>
                   <div className="duel-meta hor-meta">
-                    <span className="hor-cancha">{m.court ?? "Cancha a definir"}</span>
+                    <span className="hor-cancha">
+                      {m.court ?? "Cancha a definir"}
+                      {m.orden && ` · ${m.orden}º partido`}
+                    </span>
                     <span>
                       {m.categoriaLabel} · {m.roundLabel}
                     </span>

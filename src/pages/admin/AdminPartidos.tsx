@@ -173,7 +173,14 @@ export function AdminPartidos() {
     rows.sort((a, b) => {
       const ra = a.ronda_eliminatoria ? ROUND_ORDER.indexOf(a.ronda_eliminatoria) + 1 : 0;
       const rb = b.ronda_eliminatoria ? ROUND_ORDER.indexOf(b.ronda_eliminatoria) + 1 : 0;
-      return ra - rb || (a.fecha_hora_programada ?? "~").localeCompare(b.fecha_hora_programada ?? "~");
+      const ta = a.fecha_hora_programada ? new Date(a.fecha_hora_programada).getTime() : Infinity;
+      const tb = b.fecha_hora_programada ? new Date(b.fecha_hora_programada).getTime() : Infinity;
+      return (
+        ra - rb ||
+        (ta === tb ? 0 : ta < tb ? -1 : 1) ||
+        (a.cancha_id ?? "").localeCompare(b.cancha_id ?? "") ||
+        (a.orden_cancha ?? Infinity) - (b.orden_cancha ?? Infinity)
+      );
     });
     setPartidos(
       rows.map((p) => ({
@@ -643,7 +650,10 @@ export function AdminPartidos() {
                       ))}
                     </select>
                   ) : (
-                    p.cancha_nombre || "—"
+                    <>
+                      {p.cancha_nombre || "—"}
+                      {p.orden_cancha && <span className="row-note">{p.orden_cancha}º en la cancha</span>}
+                    </>
                   )}
                 </td>
                 <td className="tnum">

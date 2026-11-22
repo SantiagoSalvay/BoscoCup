@@ -43,7 +43,13 @@ export function VeedorHome() {
           visitante_nombre: p.equipo_visitante_id ? equipoNombre.get(p.equipo_visitante_id) ?? "—" : "—",
           cancha_nombre: p.cancha_id ? canchaNombre.get(p.cancha_id) ?? "—" : "Sin cancha"
         }))
-        .sort((a, b) => (a.fecha_hora_programada ?? "").localeCompare(b.fecha_hora_programada ?? ""))
+        // Por hora; los que no tienen (vóley, "a continuación") van después, en su orden de cancha.
+        .sort((a, b) => {
+          const ta = a.fecha_hora_programada ? new Date(a.fecha_hora_programada).getTime() : Infinity;
+          const tb = b.fecha_hora_programada ? new Date(b.fecha_hora_programada).getTime() : Infinity;
+          if (ta !== tb) return ta < tb ? -1 : 1;
+          return (a.orden_cancha ?? Infinity) - (b.orden_cancha ?? Infinity);
+        })
     );
   }
 
@@ -83,6 +89,7 @@ export function VeedorHome() {
               </div>
               <div className="assigned-meta">
                 {p.cancha_nombre}
+                {p.orden_cancha && ` · ${p.orden_cancha}º partido`}
                 {p.fecha_hora_programada &&
                   ` · ${new Date(p.fecha_hora_programada).toLocaleTimeString("es-AR", {
                     hour: "2-digit",

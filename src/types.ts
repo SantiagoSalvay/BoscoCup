@@ -93,6 +93,8 @@ export interface HorarioMatch {
   /** ISO de la hora programada (null si todavía no tiene). */
   fecha: string | null;
   court: string | null;
+  /** Lugar en su cancha (1º, 2º…), cuando se juega "a continuación" sin hora fija. */
+  orden: number | null;
   /** "Grupo A", "Liguilla", "Cuartos"… */
   roundLabel: string;
   estado: "programado" | "en_vivo" | "finalizado" | "suspendido";

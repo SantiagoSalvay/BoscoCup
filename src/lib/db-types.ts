@@ -78,6 +78,8 @@ export interface PartidoRow {
   penales_visitante: number | null;
   /** Lugar del partido dentro de su ronda de playoff (0, 1, 2…). */
   llave_pos?: number | null;
+  /** Lugar del partido en su cancha (1º, 2º…): el vóley se juega "a continuación", sin hora fija. */
+  orden_cancha?: number | null;
   created_at?: string;
 }
 
