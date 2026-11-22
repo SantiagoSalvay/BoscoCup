@@ -28,6 +28,19 @@ export interface Categoria {
   puntos_victoria: number;
   puntos_empate: number;
   puntos_derrota: number;
+  reglas?: ReglasCategoria | null;
+}
+
+/** Ajustes de la organización guardados en `categorias.reglas`. */
+export interface ReglasCategoria {
+  /** Podio fijado a mano (ids de equipo): pisa a la tabla en ese puesto. */
+  podio?: PodioManual;
+}
+
+export interface PodioManual {
+  campeon?: string;
+  subcampeon?: string;
+  tercero?: string;
 }
 
 export interface EquipoRow {

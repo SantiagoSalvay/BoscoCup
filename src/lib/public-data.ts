@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type { BracketMatch, Branch, HistorialMatch, HorarioMatch, LiveMatch, Sport, Team, ZoneStandings } from "@/types";
-import type { Categoria, EventoPartidoRow, PartidoRow } from "@/lib/db-types";
+import type { Categoria, EventoPartidoRow, PartidoRow, PodioManual } from "@/lib/db-types";
 import { computeZonesForCategoria, estaEnVivo, teamFrom, zonasParaMostrar } from "@/lib/standings";
 import { avanzarEnPantalla, cuadroSoloGrupos, proyectarCuadro } from "@/lib/bracket";
 import { sinPlayoff } from "@/lib/reglas";
@@ -44,6 +44,8 @@ export interface PublicData {
   historial: HistorialMatch[];
   /** Categoría mostrada; sirve para ignorar eventos realtime de otras categorías. */
   categoriaId?: string;
+  /** Puestos del podio fijados a mano por la organización (categorías sin playoff). */
+  podioManual?: PodioManual;
 }
 
 const EMPTY: PublicData = { zones: [], bracket: [], historial: [] };
@@ -304,5 +306,5 @@ export async function fetchPublicData(sport: Sport, branch: Branch): Promise<Pub
         : ""
     }));
 
-  return { zones, bracket, historial, categoriaId: cat.id };
+  return { zones, bracket, historial, categoriaId: cat.id, podioManual: cat.reglas?.podio };
 }

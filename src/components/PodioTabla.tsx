@@ -1,4 +1,5 @@
 import type { StandingRow, Team, ZoneStandings } from "@/types";
+import type { PodioManual } from "@/lib/db-types";
 import { Shield } from "@/components/icons";
 import { Trofeo } from "@/components/BracketView";
 import { estanEmpatados } from "@/lib/standings";
@@ -12,22 +13,29 @@ import { estanEmpatados } from "@/lib/standings";
 export function PodioTabla({
   zones,
   femenino,
+  manual,
   onTeam
 }: {
   zones: ZoneStandings[];
   /** Rótulos en femenino ("Campeona") o masculino genérico ("Campeón"). */
   femenino: boolean;
+  /** Puestos fijados por la organización: se muestran aunque la tabla diga otra cosa. */
+  manual?: PodioManual;
   onTeam: (t: Team) => void;
 }) {
   const zona = zones.find((z) => z.rows.length > 0);
   if (!zona) return null;
   const filas = zona.rows;
+  const fijos = [manual?.campeon, manual?.subcampeon, manual?.tercero];
+  // Los puestos libres se completan con la tabla, sin repetir a los equipos ya fijados.
+  const resto = filas.filter((r) => !fijos.includes(r.team.id));
   const definido = (i: number): StandingRow | null => {
-    const r = filas[i];
+    const r = resto[i];
     if (!zona.completa || !r || r.played === 0) return null;
-    return estanEmpatados(r, filas[i - 1]) || estanEmpatados(r, filas[i + 1]) ? null : r;
+    return estanEmpatados(r, resto[i - 1]) || estanEmpatados(r, resto[i + 1]) ? null : r;
   };
-  const [campeon, sub, tercero] = [definido(0), definido(1), definido(2)];
+  let siguiente = 0;
+  const [campeon, sub, tercero] = fijos.map((id) => (id ? filas.find((r) => r.team.id === id) ?? null : definido(siguiente++)));
   const lider = !zona.completa && filas[0]?.played > 0 ? filas[0] : null;
 
   const nombre = (r: StandingRow | null, clase: string) =>

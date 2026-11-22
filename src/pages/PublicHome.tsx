@@ -325,7 +325,7 @@ export function PublicHome() {
               {sinCuadro && (
                 <section className="card">
                   <SectionHead title={liguillaFemenino ? "Campeona" : "Campeón"} />
-                  <PodioTabla zones={data.zones} femenino={liguillaFemenino} onTeam={abrirEquipo} />
+                  <PodioTabla zones={data.zones} femenino={liguillaFemenino} manual={data.podioManual} onTeam={abrirEquipo} />
                 </section>
               )}
               {!sinCuadro && (
@@ -341,7 +341,7 @@ export function PublicHome() {
         {pestana === "tabla" && (
           <section className="card">
             <SectionHead title={liguillaFemenino ? "Liguilla" : "Tabla de posiciones"} />
-            {sinCuadro && <PodioTabla zones={data.zones} femenino={liguillaFemenino} onTeam={abrirEquipo} />}
+            {sinCuadro && <PodioTabla zones={data.zones} femenino={liguillaFemenino} manual={data.podioManual} onTeam={abrirEquipo} />}
             <Standings zones={data.zones} liguilla={sinCuadro} onTeam={abrirEquipo} />
             <p className="legend">
               {liguillaFemenino && "Ida y vuelta: la que más puntos suma es campeona · "}
