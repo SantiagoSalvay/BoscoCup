@@ -10,6 +10,7 @@ import { DynamicIsland } from "@/components/DynamicIsland";
 import { Segmented } from "@/components/Segmented";
 import { BracketView } from "@/components/BracketView";
 import { MapaCanchas } from "@/components/MapaCanchas";
+import { PodioTabla } from "@/components/PodioTabla";
 import { TeamSheet, type TeamRef } from "@/components/TeamSheet";
 import {
   IconAccess,
@@ -319,8 +320,14 @@ export function PublicHome() {
             <div className="pub-grid">
               <section className="card">
                 <SectionHead title={liguillaFemenino ? "Liguilla" : "Tabla"} action={() => irA("tabla")} />
-                <Standings zones={data.zones} compact liguilla={sinCuadro} campeonLabel={sport === "voley" ? "Campeón" : "Campeona"} onTeam={abrirEquipo} />
+                <Standings zones={data.zones} compact liguilla={sinCuadro} onTeam={abrirEquipo} />
               </section>
+              {sinCuadro && (
+                <section className="card">
+                  <SectionHead title={liguillaFemenino ? "Campeona" : "Campeón"} />
+                  <PodioTabla zones={data.zones} femenino={liguillaFemenino} onTeam={abrirEquipo} />
+                </section>
+              )}
               {!sinCuadro && (
                 <section className="card">
                   <SectionHead title="Cruces" action={() => irA("cruces")} />
@@ -334,7 +341,8 @@ export function PublicHome() {
         {pestana === "tabla" && (
           <section className="card">
             <SectionHead title={liguillaFemenino ? "Liguilla" : "Tabla de posiciones"} />
-            <Standings zones={data.zones} liguilla={sinCuadro} campeonLabel={sport === "voley" ? "Campeón" : "Campeona"} onTeam={abrirEquipo} />
+            {sinCuadro && <PodioTabla zones={data.zones} femenino={liguillaFemenino} onTeam={abrirEquipo} />}
+            <Standings zones={data.zones} liguilla={sinCuadro} onTeam={abrirEquipo} />
             <p className="legend">
               {liguillaFemenino && "Ida y vuelta: la que más puntos suma es campeona · "}
               {sport === "voley" && "Todos contra todos: el que más puntos suma es campeón · "}
@@ -659,14 +667,12 @@ function Standings({
   zones,
   compact,
   liguilla,
-  campeonLabel = "Campeona",
   onTeam
 }: {
   zones: ZoneStandings[];
   compact?: boolean;
-  /** Sin cuadro de playoff: la tabla sola decide quién es campeón (fútbol femenino y vóley). */
+  /** Sin cuadro de playoff: se resalta al que va primero (el podio va aparte, en `PodioTabla`). */
   liguilla?: boolean;
-  campeonLabel?: string;
   onTeam: (t: Team) => void;
 }) {
   if (zones.every((z) => z.rows.length === 0)) {
@@ -676,9 +682,8 @@ function Standings({
     <div className="zones">
       {zones.map((zone) => {
         const empatados = zone.completa ? zone.rows.filter((r) => r.empatado) : [];
-        // Liguilla: con todos los partidos jugados y sin empate arriba, la primera es campeona.
+        // Sin playoff: se resalta al que va primero.
         const lider = liguilla && zone.rows[0]?.played > 0 ? zone.rows[0] : null;
-        const campeona = lider && zone.completa && !lider.empatado ? lider : null;
         return (
           <div className="zone" key={zone.id}>
             {zone.nombre && <div className="zone-name">{zone.nombre}</div>}
@@ -747,11 +752,6 @@ function Standings({
                 </tbody>
               </table>
             </div>
-            {campeona && (
-              <p className="notice">
-                🏆 {campeonLabel}: {campeona.team.name}
-              </p>
-            )}
             {empatados.length > 0 && (
               <p className="notice">
                 Empate total entre {empatados.map((r) => r.team.name).join(" y ")}: se define con un partido de desempate.

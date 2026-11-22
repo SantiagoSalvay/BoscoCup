@@ -16,7 +16,7 @@ const PARTIDOS: Record<string, number> = { Octavos: 8, Cuartos: 4, Semifinal: 2,
 const ORDEN = ["Octavos", "Cuartos", "Semifinal", "Final"];
 const ETIQUETA: Record<string, string> = { Octavos: "Octavos", Cuartos: "Cuartos", Semifinal: "Semis", Final: "Final" };
 
-function Trofeo(props: { className?: string }) {
+export function Trofeo(props: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" {...props}>
       <path
