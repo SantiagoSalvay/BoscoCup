@@ -530,11 +530,11 @@ export function AdminPartidos() {
             <p className="form-hint" style={{ margin: 0 }}>
               Todo se juega el domingo {DIA_TORNEO.dia}/{DIA_TORNEO.mes}. Puertas 8:00 · masculino arranca {horaTexto(FUTBOL.horaInicio)} ·
               femenino (liguilla, ida y vuelta) arranca {horaTexto(FUTBOL.horaInicioFemenino)} en{" "}
-              {canchas.find((c) => c.id === canchaFemenino)?.nombre ?? "su cancha"}. En grupos y cuartos cada partido dura {FUTBOL_MINUTOS_POR_TURNO}': 2 tiempos de{" "}
-              {FUTBOL.minutosPorTiempoGrupos}' con {FUTBOL.minutosDescanso}' de descanso, y al terminar uno arranca el siguiente. Semis
-              y final, 2 tiempos de {FUTBOL.minutosPorTiempo}'. Hasta las {horaTexto(FUTBOL.horaInicioFemenino)} cada grupo masculino juega
+              {canchas.find((c) => c.id === canchaFemenino)?.nombre ?? "su cancha"}. Cada partido dura {FUTBOL_MINUTOS_POR_TURNO}': 2 tiempos de{" "}
+              {FUTBOL.minutosPorTiempoGrupos}' con {FUTBOL.minutosDescanso}' de descanso, y al terminar uno arranca el siguiente. Solo la
+              final se juega en 2 tiempos de {FUTBOL.minutosPorTiempo}'. Hasta las {horaTexto(FUTBOL.horaInicioFemenino)} cada grupo masculino juega
               en su cancha (las 3 a la par); desde esa hora lo que falte, y el playoff, va solo a las canchas 1 y 2. En playoff, si
-              empatan, van a penales (tanda de 5).
+              empatan, van a penales (tanda de {FUTBOL.penalesPorEquipo}).
             </p>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "end", flexWrap: "wrap" }}>

@@ -1,7 +1,8 @@
 import type { EventoPartidoRow } from "@/lib/db-types";
+import { FUTBOL } from "@/lib/reglas";
 
 /**
- * Tanda de penales tiro por tiro: alternan los equipos, 5 tiros cada uno y,
+ * Tanda de penales tiro por tiro: alternan los equipos, `FUTBOL.penalesPorEquipo` (3) tiros cada uno y,
  * si siguen iguales, muerte súbita (un tiro cada uno hasta que uno falle).
  * Se corta apenas uno ya no puede alcanzar al otro.
  */
@@ -30,7 +31,7 @@ export function tirosDesdeEventos(eventos: EventoPartidoRow[]): Tiro[] {
     .map((e) => ({ equipoId: e.equipo_id as string, convertido: e.tipo === "tanda_convertido" }));
 }
 
-export function estadoTanda(tiros: Tiro[], primero: string, segundo: string, porEquipo = 5): EstadoTanda {
+export function estadoTanda(tiros: Tiro[], primero: string, segundo: string, porEquipo: number = FUTBOL.penalesPorEquipo): EstadoTanda {
   const a = tiros.filter((t) => t.equipoId === primero).map((t) => t.convertido);
   const b = tiros.filter((t) => t.equipoId === segundo).map((t) => t.convertido);
   const ga = a.filter(Boolean).length;
@@ -40,11 +41,11 @@ export function estadoTanda(tiros: Tiro[], primero: string, segundo: string, por
 
   let ganador: string | null = null;
   if (na < porEquipo || nb < porEquipo) {
-    // Dentro de los 5: ¿alguno ya no lo alcanza ni metiendo todos los que le quedan?
+    // Dentro de la tanda: ¿alguno ya no lo alcanza ni metiendo todos los que le quedan?
     if (ga + (porEquipo - na) < gb) ganador = segundo;
     else if (gb + (porEquipo - nb) < ga) ganador = primero;
   } else if (na === nb && ga !== gb) {
-    // Completaron los 5 (o una ronda de muerte súbita) y hay diferencia.
+    // Completaron la tanda (o una ronda de muerte súbita) y hay diferencia.
     ganador = ga > gb ? primero : segundo;
   }
 

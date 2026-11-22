@@ -34,10 +34,11 @@ const horaDelDia = (h: { horas: number; minutos: number }) =>
   new Date(DIA_TORNEO.anio, DIA_TORNEO.mes - 1, DIA_TORNEO.dia, h.horas, h.minutos).getTime();
 
 /**
- * Reparte en turnos de 25' los partidos de grupos de fútbol, desde las 10:00.
+ * Reparte en turnos de 25' los partidos de grupos de fútbol, desde
+ * `FUTBOL.horaInicio` (10:00).
  *
- * - Masculino: hasta las 12:30 cada grupo juega en su cancha (A → 1, B → 2,
- *   C → 3) y los tres van a la par. Desde las 12:30 la Cancha 3 es del
+ * - Masculino: hasta `FUTBOL.horaInicioFemenino` (12:30) cada grupo juega en su
+ *   cancha (A → 1, B → 2, C → 3) y los tres van a la par. Desde ahí la Cancha 3 es del
  *   femenino: lo que falte de cualquier grupo se juega en la 1 o la 2, en la
  *   primera que se libere (primero la propia, si es una de esas dos).
  * - Femenino (liguilla): todo en su cancha, desde las 12:30.

@@ -150,14 +150,14 @@ Si aun así siguen iguales, la tabla lo marca y se define con un **partido de de
 
 Terminada la fase de grupos, **entran todos los equipos al cuadro**. La posición en el grupo decide el cruce: primero van los 1° de cada grupo, después los 2°, y así. El mejor ubicado juega contra el peor, el segundo contra el anteúltimo, etc. Si los equipos no alcanzan para llenar la ronda, los mejores ubicados **pasan directo** a la siguiente. Según cuántos equipos haya, se juegan octavos, cuartos, semifinales, 3er puesto y final.
 
-- En playoffs **no hay empate**: en fútbol se define por **penales** (tanda de 5).
+- En playoffs **no hay empate**: en fútbol se define por **penales** (tanda de 3).
 - Los partidos de playoffs **no cambian** la tabla de grupos.
 
 ### 📏 Reglas que la app tiene en cuenta
 
 | | ⚽ Fútbol | 🏐 Vóley |
 |---|---|---|
-| **Duración** | Grupos y cuartos: 25 minutos (10' + 5' de descanso + 10'), uno tras otro. Semis y final: 15' + 5' + 15'. Femenino: liguilla (gana la que más puntos suma). | Al mejor de 3 sets a 20 puntos, con 2 de diferencia. |
+| **Duración** | Todos los partidos: 25 minutos (10' + 5' de descanso + 10'), uno tras otro. Solo la final: 15' + 5' + 15'. Femenino: liguilla (gana la que más puntos suma). | Al mejor de 3 sets a 20 puntos, con 2 de diferencia. |
 | **Planteles** | De 7 a 10 jugadores. La app no deja anotar un jugador número 11. | — |
 | **Tarjetas** | Con **2 amarillas** acumuladas, o una **roja**, el jugador se pierde el **partido siguiente**. | — |
 

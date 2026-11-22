@@ -3,10 +3,10 @@
  *
  * - Puertas abren a las 8:00; el masculino arranca a las 10:00 y el femenino
  *   a las 12:30.
- * - Fase de grupos, octavos y cuartos: cada partido dura 25 minutos en total
- *   (10' + 5' de descanso + 10') y al terminar uno arranca el siguiente.
- * - Semis, 3er puesto y final: 15' + 5' de descanso + 15' (turno de 35').
- * - En playoff, si terminan empatados, se define por penales (tanda de 5).
+ * - Fase de grupos, octavos, cuartos, semis y 3er puesto: cada partido dura 25
+ *   minutos en total (10' + 5' de descanso + 10') y al terminar uno arranca el siguiente.
+ * - Final: 15' + 5' de descanso + 15' (turno de 35').
+ * - En playoff, si terminan empatados, se define por penales (tanda de 3).
  * - Máximo 3 cambios por equipo en cada partido.
  *
  * La espera a que se presente un equipo la manejan los organizadores a mano,
@@ -22,14 +22,16 @@ export const FUTBOL = {
    * canchas; desde ahí, solo la 1 y la 2 (grupos que falten y playoffs).
    */
   horaInicioFemenino: { horas: 12, minutos: 30 },
-  /** Tiempos de la fase de grupos, octavos y cuartos (turno total de 25'). */
+  /** El playoff (primera ronda) no arranca antes de esta hora, aunque los grupos terminen antes. */
+  horaInicioPlayoff: { horas: 15, minutos: 30 },
+  /** Tiempos de todos los partidos salvo la final (turno total de 25'). */
   minutosPorTiempoGrupos: 10,
-  /** Tiempos de semis, 3er puesto y final (turno total de 35'). */
+  /** Tiempos de la final (turno total de 35'). */
   minutosPorTiempo: 15,
   minutosDescanso: 5,
   maxCambios: 3,
   /** Tiros por equipo en la tanda de penales; si siguen iguales, muerte súbita. */
-  penalesPorEquipo: 5
+  penalesPorEquipo: 3
 } as const;
 
 /** { horas: 12, minutos: 30 } → "12:30". */
@@ -40,8 +42,8 @@ export function horaTexto(h: { horas: number; minutos: number }): string {
 /** Minutos que ocupa un partido de fase de grupos en la cancha (25'). */
 export const FUTBOL_MINUTOS_POR_TURNO = FUTBOL.minutosPorTiempoGrupos * 2 + FUTBOL.minutosDescanso;
 
-/** Rondas que se juegan con los tiempos cortos de la fase de grupos. */
-const RONDAS_CORTAS = new Set(["Octavos", "Cuartos"]);
+/** Rondas que se juegan con los tiempos cortos de la fase de grupos (todas menos la final). */
+const RONDAS_CORTAS = new Set(["Octavos", "Cuartos", "Semifinal", "3er puesto"]);
 
 /** Minutos de cada tiempo según la ronda (sin ronda = fase de grupos). */
 export function minutosPorTiempo(ronda: string | null | undefined): number {

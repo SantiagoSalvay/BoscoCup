@@ -484,7 +484,7 @@ export function PartidoEnVivo({
         </div>
         <p className="form-hint" style={{ textAlign: "center", margin: "2px 0 8px" }}>
           {ronda === "Final" ? "Final: " : ""}2 tiempos de {minutos}' · descanso {FUTBOL.minutosDescanso}'
-          {esEliminatoria ? " · si empatan, penales (tanda de 5)" : ""}
+          {esEliminatoria ? ` · si empatan, penales (tanda de ${FUTBOL.penalesPorEquipo})` : ""}
         </p>
 
         <div className="v-clock-controls">

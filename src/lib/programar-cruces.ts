@@ -13,7 +13,8 @@ import type { CanchaRow, Categoria, DeporteDb, PartidoRow } from "@/lib/db-types
  *   playoff del fútbol masculino nunca usa la Cancha 3, aunque la haya usado
  *   en grupos, porque desde el mediodía es la cancha fija del femenino.
  * - Horario: cada ronda arranca cuando termina la anterior (la primera, cuando
- *   termina la fase de grupos) y nunca se superpone con otro partido de esa
+ *   termina la fase de grupos, pero nunca antes de `FUTBOL.horaInicioPlayoff`,
+ *   las 15:30) y nunca se superpone con otro partido de esa
  *   cancha, sea de la categoría que sea. Si el torneo ya está en marcha, no
  *   programa nada antes de "ahora".
  * Todo se puede cambiar después a mano.
@@ -109,10 +110,13 @@ export async function programarCruces(categoriaId: string): Promise<{ programado
     return t;
   };
 
-  // No programar en el pasado si el torneo ya arrancó.
+  // No programar en el pasado si el torneo ya arrancó, ni antes de la hora fijada para el playoff.
   const ahora = Date.now();
   const cincoMin = 5 * 60_000;
-  const piso = ahora > DIA_MS(0, 0) ? Math.ceil(ahora / cincoMin) * cincoMin : 0;
+  const piso = Math.max(
+    ahora > DIA_MS(0, 0) ? Math.ceil(ahora / cincoMin) * cincoMin : 0,
+    DIA_MS(FUTBOL.horaInicioPlayoff.horas, FUTBOL.horaInicioPlayoff.minutos)
+  );
 
   const finDeEtapa = (hasta: number) => {
     let fin = DIA_MS(FUTBOL.horaInicio.horas, FUTBOL.horaInicio.minutos);
