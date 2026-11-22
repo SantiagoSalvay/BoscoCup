@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useCapa } from "@/lib/historial";
 import type { Branch, HistorialMatch, HorarioMatch, LiveMatch, Sport, Team, ZoneStandings } from "@/types";
@@ -9,6 +9,7 @@ import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { DynamicIsland } from "@/components/DynamicIsland";
 import { Segmented } from "@/components/Segmented";
 import { BracketView } from "@/components/BracketView";
+import { MapaCanchas } from "@/components/MapaCanchas";
 import { TeamSheet, type TeamRef } from "@/components/TeamSheet";
 import {
   IconAccess,
@@ -477,9 +478,21 @@ const horaCorta = (iso: string) => new Date(iso).toLocaleTimeString("es-AR", { h
 /** Grilla de horarios de todo el torneo, agrupada por hora de inicio. */
 function Horarios({ matches, onTeam }: { matches: HorarioMatch[] | null; onTeam: (t: Team, m: HorarioMatch) => void }) {
   const [filtro, setFiltro] = useState("todos");
+  const [cancha, setCancha] = useState<string | null>(null);
+  const listaRef = useRef<HTMLDivElement>(null);
   if (matches === null) return <p className="empty-note">Cargando horarios…</p>;
   const incluye = FILTROS_HORARIO.find((f) => f.id === filtro)?.incluye ?? (() => true);
-  const visibles = matches.filter(incluye);
+  const visibles = matches.filter((m) => incluye(m) && (!cancha || m.court === cancha));
+  const canchasEnVivo = new Set(matches.filter((m) => m.estado === "en_vivo" && m.court).map((m) => m.court as string));
+
+  function elegirCancha(nombre: string | null) {
+    setCancha(nombre);
+    // Al elegir una cancha se ven todos sus partidos, sea del deporte que sea.
+    if (nombre) {
+      setFiltro("todos");
+      requestAnimationFrame(() => listaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    }
+  }
 
   const bloques: { hora: string; partidos: HorarioMatch[] }[] = [];
   for (const m of visibles) {
@@ -492,21 +505,38 @@ function Horarios({ matches, onTeam }: { matches: HorarioMatch[] | null; onTeam:
 
   return (
     <>
-      <div className="hor-filtros" role="group" aria-label="Filtrar por categoría">
-        {FILTROS_HORARIO.map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            className={`chip-option ${filtro === f.id ? "active" : ""}`}
-            aria-pressed={filtro === f.id}
-            onClick={() => setFiltro(f.id)}
-          >
-            {f.label}
-          </button>
-        ))}
+      <p className="mapa-ayuda">Tocá una cancha para ver sus partidos.</p>
+      <MapaCanchas seleccionada={cancha} enVivo={canchasEnVivo} onSelect={elegirCancha} />
+      <div ref={listaRef} className="hor-lista">
+        {cancha ? (
+          <div className="mapa-sel">
+            <span>
+              Partidos en <b>{cancha}</b>
+            </span>
+            <button type="button" className="link-btn" onClick={() => elegirCancha(null)}>
+              Ver todas
+            </button>
+          </div>
+        ) : (
+          <div className="hor-filtros" role="group" aria-label="Filtrar por categoría">
+            {FILTROS_HORARIO.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                className={`chip-option ${filtro === f.id ? "active" : ""}`}
+                aria-pressed={filtro === f.id}
+                onClick={() => setFiltro(f.id)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       {bloques.length === 0 ? (
-        <p className="empty-note">Todavía no hay partidos programados{filtro !== "todos" ? " en esta categoría" : ""}.</p>
+        <p className="empty-note">
+          Todavía no hay partidos programados{cancha ? " en esta cancha" : filtro !== "todos" ? " en esta categoría" : ""}.
+        </p>
       ) : (
         bloques.map((b) => (
           <div className="hor-bloque" key={b.hora}>

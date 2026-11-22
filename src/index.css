@@ -1095,6 +1095,80 @@ i.tcard.r {
   font-size: 15px;
 }
 
+/* ---- mapa de canchas ---- */
+.mapa-ayuda {
+  margin: -4px 0 10px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.mapa {
+  margin-bottom: 16px;
+}
+.mapa-img {
+  position: relative;
+  max-width: 620px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.mapa-img img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.mapa-zona {
+  position: absolute;
+  display: grid;
+  place-items: start end;
+  padding: 4px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.mapa-zona:hover,
+.mapa-zona:focus-visible {
+  background: rgba(255, 255, 255, 0.18);
+  outline: none;
+}
+.mapa-zona.on {
+  background: rgba(245, 183, 0, 0.28);
+  box-shadow: 0 0 0 3px #f5b700, 0 0 24px rgba(245, 183, 0, 0.6);
+}
+.mapa-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 10px -16px 0;
+  padding: 0 16px 2px;
+}
+.mapa-chips::-webkit-scrollbar {
+  display: none;
+}
+.mapa-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: none;
+}
+.hor-lista {
+  scroll-margin-top: 12px;
+}
+.mapa-sel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-win) 16%, transparent);
+  font-size: 14px;
+}
+
 /* ---- horarios ---- */
 .hor-filtros {
   display: flex;
