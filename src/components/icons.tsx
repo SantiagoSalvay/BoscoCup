@@ -13,14 +13,21 @@ export function IconFutbol(props: IconProps) {
 
 export function IconVoley(props: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" {...props}>
-      <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-      <path
-        d="M3.5 10.5c4 2 13 2 17 0M5.2 16.5c3.8-3 9.8-3 13.6 0M7 5.3c2 3.6 2 10.8 0 14.4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" strokeWidth="1.8" />
+      {/* Paneles curvos de la pelota de vóley */}
+      <path d="M11 7a16 16 20 0 1 10.98 4.362" strokeWidth="1.5" />
+      <path d="M12 12a13 13 0 0 1-8.66 5" strokeWidth="1.5" />
+      <path d="M16.83 13.634a16 16 0 0 1-9.267 7.328" strokeWidth="1.5" />
+      <path d="M20.66 17A13 13 0 0 0 12 12a13 13 0 0 1 0-10" strokeWidth="1.5" />
+      <path d="M8.17 15.366a16 16 0 0 1-1.713-11.69" strokeWidth="1.5" />
     </svg>
   );
 }
